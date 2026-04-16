@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClassSubject;
+use App\Models\Exam;
+use App\Models\ExamResult;
 use App\Models\ParentModal;
 use App\Models\Student;
 use App\Models\User;
@@ -305,5 +307,76 @@ class ParentController extends Controller
         return response()->json(['data' => $subjects]);
     }
 
-   
+    public function getStudentTimetable($studentId)
+    {
+        // Find student and class
+        $student = \App\Models\Student::findOrFail($studentId);
+
+        // Fetch Master Data
+        $days = \App\Models\WeekDay::orderBy('sort_order')->get();
+        $slots = \App\Models\TimeSlot::orderBy('start_time')->get();
+
+        // Fetch Timetable with relationships
+        $entries = \App\Models\ClassTimetable::with(['subject', 'teacher'])
+            ->where('class_id', $student->class_id)
+            ->get();
+
+        // Grouping the data for easy JS access
+        $timetableData = [];
+        foreach ($entries as $entry) {
+            $timetableData[$entry->week_day_id][$entry->time_slot_id] = [
+                'subject_name' => $entry->subject->name,
+                'teacher_name' => $entry->teacher->first_name . ' ' . $entry->teacher->last_name,
+                'room'         => $entry->room_number ?? 'N/A'
+            ];
+        }
+
+        // Return JSON so the variable $slots doesn't conflict with the main page view
+        return response()->json([
+            'status' => true,
+            'days'   => $days,
+            'slots'  => $slots,
+            'data'   => $timetableData
+        ]);
+    }
+
+    public function childrenResults(Request $request)
+    {
+        $user = auth()->user();
+
+        $parent = \App\Models\ParentModal::where('user_id', $user->id)->first();
+
+        if (!$parent) {
+            return redirect()->route('dashboard')->with('error', 'Parent profile not found.');
+        }
+
+        $children = Student::where('parent_id', $parent->id)->with('class')->get();
+
+        if ($children->isEmpty()) {
+            return redirect()->route('dashboard')->with('error', 'No children linked to this parent profile.');
+        }
+
+        $selectedStudent = null;
+        $exams = [];
+        $results = [];
+
+        if ($request->filled('student_id')) {
+            $selectedStudent = $children->where('id', $request->student_id)->first();
+
+            if ($selectedStudent) {
+                $exams = Exam::whereHas('results', function ($q) use ($selectedStudent) {
+                    $q->where('student_id', $selectedStudent->id);
+                })->get();
+
+                if ($request->filled('exam_id')) {
+                    $results = ExamResult::where('student_id', $selectedStudent->id)
+                        ->where('exam_id', $request->exam_id)
+                        ->with('subject')
+                        ->get();
+                }
+            }
+        }
+
+        return view('parent.results', compact('children', 'selectedStudent', 'exams', 'results'));
+    }
 }

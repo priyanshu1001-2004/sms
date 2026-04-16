@@ -1,28 +1,22 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
-class ClassTeacher extends Model
+class ClassTimetable extends Model
 {
     protected $guarded = ['id'];
 
-    /**
-     * The relationship your controller is calling: ->with(['schoolClass'])
-     */
-    public function schoolClass()
+    // This is the specific relationship the error is looking for
+    public function class()
     {
         return $this->belongsTo(Classes::class, 'class_id');
     }
 
-    /**
-     * Keep this as an alias so $item->class also works
-     */
-    public function class()
+    public function subject()
     {
-        return $this->belongsTo(Classes::class, 'class_id');
+        return $this->belongsTo(Subject::class, 'subject_id');
     }
 
     public function teacher()
@@ -34,7 +28,6 @@ class ClassTeacher extends Model
     {
         static::addGlobalScope('tenant', function ($builder) {
             if (Auth::check() && !Auth::user()->hasRole('super_admin')) {
-                // Prevent ambiguous column errors
                 $builder->where($builder->getQuery()->from . '.organization_id', currentOrgId());
             }
         });

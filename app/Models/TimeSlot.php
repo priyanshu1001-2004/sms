@@ -3,38 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 
-class ClassTeacher extends Model
+class TimeSlot extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = ['id'];
-
-    /**
-     * The relationship your controller is calling: ->with(['schoolClass'])
-     */
-    public function schoolClass()
-    {
-        return $this->belongsTo(Classes::class, 'class_id');
-    }
-
-    /**
-     * Keep this as an alias so $item->class also works
-     */
-    public function class()
-    {
-        return $this->belongsTo(Classes::class, 'class_id');
-    }
-
-    public function teacher()
-    {
-        return $this->belongsTo(Teacher::class, 'teacher_id');
-    }
 
     protected static function booted()
     {
         static::addGlobalScope('tenant', function ($builder) {
             if (Auth::check() && !Auth::user()->hasRole('super_admin')) {
-                // Prevent ambiguous column errors
                 $builder->where($builder->getQuery()->from . '.organization_id', currentOrgId());
             }
         });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ExamSchedule;
 use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -270,6 +271,7 @@ class TeacherController extends Controller
         $teacher = \App\Models\Teacher::where('user_id', $user->id)->firstOrFail();
 
         // 1. CHANGE HERE: Use ->get() instead of ->first()
+        // Use the full path inside the query to bypass any import issues
         $headClasses = \App\Models\ClassTeacher::with(['schoolClass' => function ($query) {
             $query->withCount('students');
         }])
@@ -329,5 +331,55 @@ class TeacherController extends Controller
         $myClasses = \App\Models\Classes::whereIn('id', $allClassIds)->get();
 
         return view('teacher.students', compact('students', 'myClasses'));
+    }
+
+    public function myTimetable()
+    {
+        $user = auth()->user();
+
+        // Check if the user actually has a teacher profile
+        // Assuming your User model has a hasOne relationship named 'teacher'
+        $teacher = $user->teacher;
+
+        if (!$teacher) {
+            return redirect()->back()->with('error', 'Teacher profile not found for this account.');
+        }
+
+        $days = \App\Models\WeekDay::orderBy('sort_order')->get();
+        $slots = \App\Models\TimeSlot::orderBy('start_time')->get();
+
+        // Now it is safe to use $teacher->id
+        $entries = \App\Models\ClassTimetable::with(['subject', 'class'])
+            ->where('teacher_id', $teacher->id)
+            ->get();
+
+        $timetableData = [];
+        foreach ($entries as $entry) {
+            $timetableData[$entry->week_day_id][$entry->time_slot_id] = $entry;
+        }
+
+        return view('teacher.timetable', compact('days', 'slots', 'timetableData', 'teacher'));
+    }
+
+    public function exam_timetable(Request $request)
+    {
+        $user = auth()->user();
+        $teacherProfile = $user->teacher; // Consistent with your 'teacher' relationship
+
+        if (!$teacherProfile) {
+            return redirect()->back()->with('error', 'Teacher profile not found.');
+        }
+
+        // Fetch schedules for classes assigned to this teacher
+        $schedules = ExamSchedule::whereHas('class.classTeachers', function ($q) use ($teacherProfile) {
+            $q->where('teacher_id', $teacherProfile->id);
+        })
+            ->with(['exam', 'class', 'subject'])
+            ->orderBy('exam_date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->get()
+            ->groupBy('exam.name'); // Group by Exam (e.g., First Term, Final Term)
+
+        return view('teacher.exam_timetable', compact('schedules'));
     }
 }

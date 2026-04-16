@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classes;
+use App\Models\Exam;
+use App\Models\ExamResult;
+use App\Models\ExamSchedule;
 use App\Models\ParentModal;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -376,8 +380,102 @@ class StudentController extends Controller
 
         $subjects = \App\Models\ClassSubject::with(['subject', 'assignedTeacher.teacher'])
             ->where('class_id', $student->class_id)
-            ->get(); 
+            ->get();
 
         return view('student.subjects', compact('subjects', 'student'));
+    }
+
+    public function myTimetable()
+    {
+        $user = auth()->user();
+
+        // 1. Get the Student profile and their Class ID
+        $student = \App\Models\Student::where('user_id', $user->id)->firstOrFail();
+        $classId = $student->class_id;
+
+        // 2. Fetch Master Data
+        $days = \App\Models\WeekDay::orderBy('sort_order')->get();
+        $slots = \App\Models\TimeSlot::orderBy('start_time')->get();
+
+        // 3. Fetch Timetable entries for the student's class
+        $entries = \App\Models\ClassTimetable::with(['subject', 'teacher'])
+            ->where('class_id', $classId)
+            ->get();
+
+        $timetableData = [];
+        foreach ($entries as $entry) {
+            $timetableData[$entry->week_day_id][$entry->time_slot_id] = $entry;
+        }
+
+        return view('student.timetable', compact('days', 'slots', 'timetableData', 'student'));
+    }
+
+    public function myResults(Request $request)
+    {
+        // 1. Get the logged-in student's record
+        $student = Auth::user()->student; // Assumes User hasOne Student relationship
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Student record not found.');
+        }
+
+        // 2. Fetch all exams the student has participated in
+        $exams = Exam::whereHas('results', function ($q) use ($student) {
+            $q->where('student_id', $student->id);
+        })->orderBy('start_date', 'desc')->get();
+
+        $selectedExam = null;
+        $results = [];
+
+        // 3. If an exam is selected, fetch detailed marks
+        if ($request->filled('exam_id')) {
+            $selectedExam = Exam::findOrFail($request->exam_id);
+
+            $results = ExamResult::where('student_id', $student->id)
+                ->where('exam_id', $request->exam_id)
+                ->with('subject')
+                ->get();
+        }
+
+        return view('student.my_results', compact('student', 'exams', 'selectedExam', 'results'));
+    }
+
+    public function myExamTimetable()
+    {
+        $user = auth()->user();
+        $student = $user->student; // Ensure User hasOne Student relationship
+
+        // Case 1: Student Profile Missing
+        if (!$student) {
+            return view('student.exam_timetable', [
+                'schedules' => collect(),
+                'message' => 'Student profile not found. Please contact the administration.'
+            ]);
+        }
+
+        // Case 2: Student not assigned to a Class
+        if (!$student->class_id) {
+            return view('student.exam_timetable', [
+                'schedules' => collect(),
+                'message' => 'You are not assigned to any class yet. Timetables are class-specific.'
+            ]);
+        }
+
+        $schedules = ExamSchedule::where('class_id', $student->class_id)
+            ->with(['exam', 'subject'])
+            ->whereHas('exam', function ($q) {
+                $q->where('is_published', true);
+            })
+            ->orderBy('exam_date', 'asc')
+            ->get()
+            ->groupBy('exam.name');
+
+        // Case 3: No Exams Published
+        $message = null;
+        if ($schedules->isEmpty()) {
+            $message = 'No exam timetables have been published for your class at this time.';
+        }
+
+        return view('student.exam_timetable', compact('schedules', 'message'));
     }
 }

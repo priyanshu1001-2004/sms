@@ -62,11 +62,19 @@
                             <a href="javascript:void(0)" class="btn btn-sm btn-info-light">
                                 <i class="fe fe-eye me-1"></i> Profile
                             </a>
+
                             <button type="button" class="btn btn-sm btn-primary-light view-subjects-btn"
                                 data-id="{{ $student->id }}"
                                 data-name="{{ $student->first_name }} {{ $student->last_name }}">
                                 <i class="fe fe-book me-1"></i> Subjects
                             </button>
+
+                            <button type="button" class="btn btn-sm btn-warning-light view-timetable-btn"
+                                data-id="{{ $student->id }}" data-class-id="{{ $student->class_id }}"
+                                data-name="{{ $student->first_name }} {{ $student->last_name }}">
+                                <i class="fe fe-calendar me-1"></i> Timetable
+                            </button>
+
                             <a href="javascript:void(0)" class="btn btn-sm btn-success-light">
                                 <i class="fe fe-file-text me-1"></i> Fees
                             </a>
@@ -112,9 +120,41 @@
         </div>
     </div>
 </div>
+
+
+
+{{-- TIMETABLE MODAL --}}
+<div class="modal fade" id="timetableModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title text-white">
+                    <i class="fe fe-calendar me-2"></i>Weekly Schedule: <span id="tt_student_name"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">x</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive" id="tt_loading_area">
+                    <table class="table table-bordered text-center table-vcenter mb-0">
+                        <thead class="bg-light" id="timetable_header">
+                            {{-- Header generated via JS --}}
+                        </thead>
+                        <tbody id="timetable_content">
+                            {{-- Content generated via JS --}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light shadow-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
-@section('scripts') {{-- Make sure this matches your master.blade.php yield --}}
+@section('scripts')
 <script>
     $(document).on('click', '.view-subjects-btn', function () {
         let studentId = $(this).data('id');
@@ -164,6 +204,51 @@
             },
             error: function () {
                 $('#subjects_list_body').html('<tr><td colspan="3" class="text-center text-danger">Failed to fetch subjects. Please try again.</td></tr>');
+            }
+        });
+    });
+</script>
+
+<script>
+    $(document).on('click', '.view-timetable-btn', function () {
+        let studentId = $(this).data('id');
+        let studentName = $(this).data('name');
+
+        $('#tt_student_name').text(studentName);
+        $('#timetable_content').html('<tr><td colspan="10">Loading...</td></tr>');
+        $('#timetableModal').modal('show');
+
+        $.ajax({
+            url: `/parents/student-timetable/${studentId}`,
+            method: 'GET',
+            success: function (res) {
+                let html = '';
+
+                res.days.forEach(day => {
+                    html += `<tr><td class="bg-light fw-bold text-primary">${day.name}</td>`;
+
+                    res.slots.forEach(slot => {
+                        let entry = (res.data[day.id] && res.data[day.id][slot.id]) ? res.data[day.id][slot.id] : null;
+
+                        if (slot.is_break) {
+                            html += `<td class="bg-light-warning small fw-bold text-warning">RECESS</td>`;
+                        } else if (entry) {
+                            html += `<td>
+                            <div class="fw-bold text-dark">${entry.subject_name}</div>
+                            <div class="small text-muted">${entry.teacher_name}</div>
+                            <div class=" text-danger mt-1">Rm: ${entry.room}</div>
+                        </td>`;
+                        } else {
+                            html += `<td><span class="text-muted">-</span></td>`;
+                        }
+                    });
+                    html += `</tr>`;
+                });
+
+                $('#timetable_content').html(html);
+            },
+            error: function () {
+                $('#timetable_content').html('<tr><td colspan="10" class="text-danger">Failed to load.</td></tr>');
             }
         });
     });

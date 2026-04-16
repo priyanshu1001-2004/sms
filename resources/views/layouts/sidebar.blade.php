@@ -82,6 +82,20 @@
 
                         <li class="slide">
                             <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
+                                href="{{ route('time_slots.index') }}"><i class="side-menu__icon fe fe-home"></i><span
+                                    class="side-menu__label">Time
+                                    Slot</span></a>
+                        </li>
+
+                        <li class="slide">
+                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
+                                href="{{ route('class_timetables.index') }}"><i
+                                    class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Class
+                                    Timetable</span></a>
+                        </li>
+
+                        <li class="slide">
+                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
                                 href="{{ route('class_teachers.index') }}"><i
                                     class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Assign Class
                                     Teacher</span></a>
@@ -93,6 +107,51 @@
                                     class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Assign Subject
                                     Teachers</span></a>
                         </li>
+
+                        @endhasrole
+                    </ul>
+                </li>
+
+                <li class="slide">
+                    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0)"><i
+                            class="side-menu__icon fe fe-slack"></i><span class="side-menu__label">Examinations</span><i
+                            class="angle fe fe-chevron-right"></i></a>
+                    <ul class="slide-menu">
+                        @hasrole('master_admin')
+
+                        <li class="slide">
+                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
+                                href="{{ route('exams.index') }}"><i class="side-menu__icon fe fe-home"></i><span
+                                    class="side-menu__label">Exam List
+                                </span></a>
+                        </li>
+
+                        <li class="slide">
+                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
+                                href="{{ route('grades.index') }}"><i class="side-menu__icon fe fe-home"></i><span
+                                    class="side-menu__label">Grade
+                                </span></a>
+                        </li>
+
+                        <li class="slide">
+                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
+                                href="{{ route('exam-results.index') }}"><i class="side-menu__icon fe fe-home"></i><span
+                                    class="side-menu__label"> Mark Entry
+                                </span></a>
+                        </li>
+
+
+                        <li class="slide">
+                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
+                                href="{{ route('exam-results.student-wise') }}"><i
+                                    class="side-menu__icon fe fe-home"></i><span class="side-menu__label"> Student-wise
+                                    Entry
+                                </span></a>
+                        </li>
+
+
+
+
 
                         @endhasrole
                     </ul>
@@ -135,6 +194,36 @@
                         <span class="side-menu__label">My Students</span>
                     </a>
                 </li>
+
+                <li class="slide">
+                    <a class="side-menu__item" href="{{ route('teacher.timetable') }}">
+                        <i class="side-menu__icon fe fe-book-open"></i>
+                        <span class="side-menu__label">My Schedule</span>
+                    </a>
+                </li>
+
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->is('exams/mark-entry*') ? 'active' : '' }}"
+                        href="{{ route('exam-results.index') }}">
+                        <i class="side-menu__icon fe fe-edit-3"></i>
+                        <span class="side-menu__label">Bulk Mark Entry</span>
+                    </a>
+                </li>
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->is('exams/student-wise*') ? 'active' : '' }}"
+                        href="{{ route('exam-results.student-wise') }}">
+                        <i class="side-menu__icon fe fe-user-check"></i>
+                        <span class="side-menu__label">Student-wise Entry</span>
+                    </a>
+                </li>
+
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->is('teacher/exam-timetable*') ? 'active' : '' }}"
+                        href="{{ route('teacher.exam.timetable') }}">
+                        <i class="side-menu__icon fe fe-calendar"></i> {{-- Changed icon to calendar --}}
+                        <span class="side-menu__label">Exam Timetable</span>
+                    </a>
+                </li>
                 @endhasrole
 
                 @hasrole('student')
@@ -145,12 +234,44 @@
                         <span class="side-menu__label">My Subjects</span>
                     </a>
                 </li>
+
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->is('student/my-timetable') ? 'active' : '' }}"
+                        href="{{ route('student.timetable') }}">
+                        <i class="side-menu__icon fe fe-calendar"></i>
+                        <span class="side-menu__label">My Timetable</span>
+                    </a>
+                </li>
+
+                <li class="slide">
+                    <a class="side-menu__item {{ Request::is('my-results*') ? 'active' : '' }}"
+                        href="{{ route('student.results') }}">
+                        <i class="side-menu__icon fe fe-award"></i>
+                        <span class="side-menu__label">My Results</span>
+                    </a>
+                </li>
+
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->is('student/exam-timetable*') ? 'active' : '' }}"
+                        href="{{ route('student.exam.timetable') }}">
+                        <i class="side-menu__icon fe fe-clock"></i>
+                        <span class="side-menu__label">My Exam Schedule</span>
+                    </a>
+                </li>
+
                 @endhasrole
 
                 @hasrole('parent')
                 <li class="slide">
                     <a class="side-menu__item has-link" data-bs-toggle="slide" href="{{ route('parents.students') }}"><i
                             class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Students</span></a>
+                </li>
+
+                <li class="slide">
+                    <a class="side-menu__item" href="{{ route('parent.results') }}">
+                        <i class="side-menu__icon fe fe-users"></i>
+                        <span class="side-menu__label">Student Results</span>
+                    </a>
                 </li>
                 @endhasrole
 

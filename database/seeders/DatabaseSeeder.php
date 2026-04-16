@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
+            WeekDaySeeder::class
         ]);
 
         // ✅ Step 2: Create Super Admin (using phone login)

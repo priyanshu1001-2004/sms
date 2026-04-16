@@ -9,7 +9,11 @@ use App\Http\Controllers\{
     ClassesController,
     ClassSubjectController,
     ClassTeacherController,
+    ClassTimetableController,
     DashboardController,
+    ExamController,
+    ExamResultController,
+    GradeController,
     OrganizationController,
     ParentController,
     ProfileController,
@@ -18,6 +22,7 @@ use App\Http\Controllers\{
     SubjectTeacherController,
     SubscriptionController,
     TeacherController,
+    TimeSlotController,
     UserController
 };
 
@@ -79,12 +84,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('students/toggle-status/{id}', [StudentController::class, 'toggleStatus'])->name('students.toggleStatus');
     Route::put('students/{id}/update-password', [StudentController::class, 'updatePassword'])->name('students.updatePassword');
     Route::get('my-subjects', [StudentController::class, 'mySubjects'])->name('student.subjects');
+    Route::get('student/my-timetable', [StudentController::class, 'myTimetable'])->name('student.timetable');
+    Route::get('my-results', [StudentController::class, 'myResults'])->name('student.results');
+    Route::get('student/exam-timetable', [StudentController::class, 'myExamTimetable'])->name('student.exam.timetable');
+
 
     Route::resource('parents', ParentController::class);
     Route::post('parents/toggle-status/{id}', [ParentController::class, 'toggleStatus'])->name('parents.toggleStatus');
     Route::put('parents/{id}/update-password', [ParentController::class, 'updatePassword'])->name('parents.updatePassword');
     Route::get('my-children', [ParentController::class, 'parent_students'])->name('parents.students');
     Route::get('parents/student-subjects/{student_id}', [ParentController::class, 'getStudentSubjects']);
+    Route::get('parents/student-timetable/{studentId}', [ParentController::class, 'getStudentTimetable'])->name('student_timetable');
+    Route::get('children-results', [ParentController::class, 'childrenResults'])->name('parent.results');
 
 
     Route::get('parents/{id}/students', [ParentController::class, 'getStudents'])
@@ -138,6 +149,30 @@ Route::middleware(['auth'])->group(function () {
     Route::get('my-assignments', [TeacherController::class, 'myClassesAndSubjects'])->name('teacher.assignments');
     Route::get('teacher/get-class-students/{classId}', [TeacherController::class, 'getClassStudents']);
     Route::get('teacher/my-students', [TeacherController::class, 'myStudents'])->name('teacher.students');
+    Route::get('teacher/my-timetable', [TeacherController::class, 'myTimetable'])->name('teacher.timetable');
+    Route::get('teacher/exam-timetable', [TeacherController::class, 'exam_timetable'])->name('teacher.exam.timetable');
+
+
+    // time table
+    Route::resource('time_slots', TimeSlotController::class);
+    Route::resource('class_timetables', ClassTimetableController::class);
+    Route::get('get-teacher-by-subject-class/{subjectId}/{classId}', [ClassTimetableController::class, 'getTeacherBySubject'])->name('get.teacher.by.subject');
+
+    // exam 
+    Route::get('exams/{exam}/schedule', [ExamController::class, 'manageSchedule'])->name('exams.schedule.manage');
+    Route::post('exams/schedule/store', [ExamController::class, 'storeSchedule'])->name('exams.schedule.store');
+    Route::post('exams/toggle-publish/{id}', [ExamController::class, 'togglePublish'])->name('exams.toggle-publish');
+
+    Route::resource('exams', ExamController::class);
+    Route::resource('grades', GradeController::class);
+
+    Route::get('exam-results/create', [ExamResultController::class, 'create'])->name('exam-results.create');
+    Route::get('exam-results/student', [ExamResultController::class, 'studentWise'])->name('exam-results.student-wise');
+    Route::post('exam-results/store-bulk', [ExamResultController::class, 'storeBulk'])->name('exam-results.store-bulk');
+    Route::get('get-students-by-class/{class_id}', [ExamResultController::class, 'getStudentsByClass']);
+    Route::resource('exam-results', ExamResultController::class);
+
+
 
     /*
     |--------------------------------------------------------------------------

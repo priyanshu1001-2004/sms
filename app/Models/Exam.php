@@ -3,38 +3,40 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 
-class ClassTeacher extends Model
+class Exam extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = ['id'];
 
-    /**
-     * The relationship your controller is calling: ->with(['schoolClass'])
-     */
-    public function schoolClass()
+    // Relationships
+    public function academicYear()
     {
-        return $this->belongsTo(Classes::class, 'class_id');
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(ExamSchedule::class);
+    }
+
+
+    public function results()
+    {
+        return $this->hasMany(ExamResult::class, 'exam_id');
     }
 
     /**
-     * Keep this as an alias so $item->class also works
+     * Multi-tenant Global Scope & Auto-Organization Mapping
      */
-    public function class()
-    {
-        return $this->belongsTo(Classes::class, 'class_id');
-    }
-
-    public function teacher()
-    {
-        return $this->belongsTo(Teacher::class, 'teacher_id');
-    }
-
     protected static function booted()
     {
         static::addGlobalScope('tenant', function ($builder) {
             if (Auth::check() && !Auth::user()->hasRole('super_admin')) {
-                // Prevent ambiguous column errors
+                // Ground the query to the specific organization
                 $builder->where($builder->getQuery()->from . '.organization_id', currentOrgId());
             }
         });

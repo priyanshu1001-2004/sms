@@ -133,4 +133,9 @@
         border-radius: 6px !important;
         object-fit: cover;
     }
+
+    /* Add this to your CSS file */
+    #data-table-container {
+        transition: opacity 0.3s ease-in-out;
+    }
 </style>

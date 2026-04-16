@@ -157,8 +157,7 @@
                                                     <div class="switch-toggle d-flex align-items-center">
                                                         <p class="onoffswitch2 mb-0">
                                                             <input type="checkbox"
-                                                                id="statusToggle{{ $organization->id }}" {{-- Unique ID
-                                                                per row --}}
+                                                                id="statusToggle{{ $organization->id }}"
                                                                 class="onoffswitch2-checkbox globalStatusToggle"
                                                                 data-url="{{ route('organizations.toggleStatus', $organization->id) }}"
                                                                 {{ $organization->status ? 'checked' : '' }}>

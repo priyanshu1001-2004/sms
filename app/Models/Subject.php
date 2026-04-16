@@ -19,4 +19,11 @@ class Subject extends Model
             }
         });
     }
+
+    public function classes()
+    {
+        return $this->belongsToMany(Classes::class, 'class_subjects', 'subject_id', 'class_id')
+            ->withPivot('status') // Since you added a status column
+            ->withTimestamps();
+    }
 }

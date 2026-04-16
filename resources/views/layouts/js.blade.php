@@ -196,18 +196,25 @@
                 resetBtnLoader(submitBtn);
                 toastr.success(res.message || 'Data saved successfully');
 
-                // 1. Reset Form
-                if (form.data('reset') != 0) form[0].reset();
+                if (form.data('reset') == 1) form[0].reset();
 
-                // 2. Hide Modal
                 let modal = form.closest('.modal');
                 if (modal.length) {
                     bootstrap.Modal.getInstance(modal[0]).hide();
                 }
 
                 if (form.data('reload') != 0) {
-                    $('#data-table-container').load(window.location.href + ' #data-table-container > *', function () {
+                    console.log("Refreshing table container..."); // Debugging
+                    $('#data-table-container').load(window.location.href + ' #data-table-container > *', function (response, status, xhr) {
+                        if (status == "error") {
+                            console.log("Error reloading table: " + xhr.status + " " + xhr.statusText);
+                        }
+
                         if (typeof initSelect2 === "function") initSelect2();
+
+                        if (typeof $('[data-bs-toggle="tooltip"]').tooltip === "function") {
+                            $('[data-bs-toggle="tooltip"]').tooltip();
+                        }
                     });
                 }
             },
@@ -348,67 +355,67 @@
             });
         }
     });
-    
-let deleteUrl = "";
-let rowToDelete = null;
 
-// 1. Open Modal - Already using delegation, this is GOOD.
-$(document).on('click', '.trigger-delete', function () {
-    let btn = $(this);
-    deleteUrl = btn.data('url');
-    rowToDelete = btn.closest('tr');
+    let deleteUrl = "";
+    let rowToDelete = null;
 
-    $('#modal-title').text(btn.data('title') || 'Are you sure?');
-    $('#modal-message').text(btn.data('message') || "You won't be able to revert this!");
+    // 1. Open Modal - Already using delegation, this is GOOD.
+    $(document).on('click', '.trigger-delete', function () {
+        let btn = $(this);
+        deleteUrl = btn.data('url');
+        rowToDelete = btn.closest('tr');
 
-    let btnClass = btn.data('btn-class') || 'btn-danger';
-    $('#modal-confirm-btn').attr('class', 'btn ' + btnClass);
+        $('#modal-title').text(btn.data('title') || 'Are you sure?');
+        $('#modal-message').text(btn.data('message') || "You won't be able to revert this!");
 
-    $('#globalConfirmModal').modal('show');
-});
+        let btnClass = btn.data('btn-class') || 'btn-danger';
+        $('#modal-confirm-btn').attr('class', 'btn ' + btnClass);
 
-// 2. Handle the Actual Request - Optimized
-$(document).on('click', '#modal-confirm-btn', function (e) {
-    e.preventDefault();
-    let confirmBtn = $(this);
-
-    confirmBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Deleting...');
-
-    $.ajax({
-        url: deleteUrl,
-        type: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function (res) {
-            toastr.success(res.message || 'Deleted successfully');
-            $('#globalConfirmModal').modal('hide');
-
-            if ($('#data-table-container').length) {
-                // FADE OUT then REFRESH
-                rowToDelete.fadeOut(400, function () {
-                    // Reload the container
-                    $('#data-table-container').load(window.location.href + ' #data-table-container > *', function () {
-                        // RE-INITIALIZE DATATABLE IF YOU USE ONE
-                        if ($.fn.DataTable.isDataTable('#basic-datatable')) {
-                             $('#basic-datatable').DataTable();
-                        }
-                    });
-                });
-            } else {
-                location.reload();
-            }
-        },
-        error: function (xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Something went wrong');
-        },
-        complete: function () {
-            confirmBtn.prop('disabled', false).text('Confirm');
-            // Reset URL to prevent accidental double deletes
-            deleteUrl = ""; 
-        }
+        $('#globalConfirmModal').modal('show');
     });
-});
+
+    // 2. Handle the Actual Request - Optimized
+    $(document).on('click', '#modal-confirm-btn', function (e) {
+        e.preventDefault();
+        let confirmBtn = $(this);
+
+        confirmBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Deleting...');
+
+        $.ajax({
+            url: deleteUrl,
+            type: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (res) {
+                toastr.success(res.message || 'Deleted successfully');
+                $('#globalConfirmModal').modal('hide');
+
+                if ($('#data-table-container').length) {
+                    // FADE OUT then REFRESH
+                    rowToDelete.fadeOut(400, function () {
+                        // Reload the container
+                        $('#data-table-container').load(window.location.href + ' #data-table-container > *', function () {
+                            // RE-INITIALIZE DATATABLE IF YOU USE ONE
+                            if ($.fn.DataTable.isDataTable('#basic-datatable')) {
+                                $('#basic-datatable').DataTable();
+                            }
+                        });
+                    });
+                } else {
+                    location.reload();
+                }
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Something went wrong');
+            },
+            complete: function () {
+                confirmBtn.prop('disabled', false).text('Confirm');
+                // Reset URL to prevent accidental double deletes
+                deleteUrl = "";
+            }
+        });
+    });
 
 
 

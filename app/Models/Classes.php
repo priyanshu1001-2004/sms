@@ -14,7 +14,9 @@ class Classes extends Model
     {
         static::addGlobalScope('tenant', function ($builder) {
             if (auth()->check() && !auth()->user()->hasRole('super_admin')) {
-                $builder->where('organization_id', currentOrgId());
+                // FIX: Prefix organization_id with the table name to prevent ambiguity
+                $table = $builder->getModel()->getTable();
+                $builder->where($table . '.organization_id', currentOrgId());
             }
         });
     }
@@ -32,6 +34,12 @@ class Classes extends Model
         return $this->hasOne(ClassTeacher::class, 'class_id');
     }
 
+    public function classTeachers()
+    {
+        return $this->hasMany(ClassTeacher::class, 'class_id');
+    }
+
+    // This refers to the pivot model directly
     public function classSubjects()
     {
         return $this->hasMany(ClassSubject::class, 'class_id');
@@ -40,5 +48,13 @@ class Classes extends Model
     public function board()
     {
         return $this->belongsTo(Board::class, 'board_id');
+    }
+
+    // This is the many-to-many relationship using your custom pivot table
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'class_subjects', 'class_id', 'subject_id')
+            ->withPivot('status', 'organization_id') // Recommended to include these
+            ->wherePivot('status', 1);
     }
 }
