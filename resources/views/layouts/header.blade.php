@@ -34,10 +34,10 @@
 
 
                 {{-- 3. Back to Super Admin Button --}}
-                @if(session()->has('impersonator_id') && auth()->user()->hasRole('admin'))
+                @if(session()->has('impersonator_id') && auth()->user()->hasRole('master_admin'))
                 <div class="mt-0">
                     <a title="Back To Super Admin" href="{{ route('switch.back') }}" class="btn btn-sm btn-danger ms-3">
-                        <i class="fa-solid fa-person-walking-arrow-loop-left"></i>
+                        <i class="fa-solid fa-person-walking-arrow-loop-left"></i> 
                     </a>
                 </div>
                 @endif

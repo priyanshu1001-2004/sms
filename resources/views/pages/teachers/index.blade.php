@@ -27,7 +27,7 @@
                                     id="basic-datatable">
                                     <thead class="table-primary">
                                         <tr>
-                                            <th>#</th>
+                                            <th>ID</th>
                                             <th>Photo</th>
                                             <th data-orderby="true">Name</th>
                                             <th>Email</th>
@@ -43,7 +43,7 @@
                                     <tbody>
                                         @forelse($teachers as $index => $teacher)
                                         <tr>
-                                            <td>{{ $teachers->firstItem() + $index }}</td>
+                                            <td>{{ $teacher->code  }}</td>
                                             <td>
                                                 <img src="{{ $teacher->teacher_photo ? asset('storage/' . $teacher->teacher_photo) : asset('assets/images/users/default.png') }}"
                                                     alt="Photo" class="rounded-circle" width="40" height="40">

@@ -32,7 +32,10 @@ class ProfileController extends Controller
                 'student'     => $this->studentProfile($user),
                 'parent'      => $this->parentProfile($user),
                 'admin'       => $this->adminProfile($user),
-                'master_admin' => view('pages.profile.master_admin', compact('user')),
+                'master_admin' => view('pages.profile.master_admin', [
+                    'user' => $user,
+                    'org'  => $user->organization 
+                ]),
                 'super_admin' => view('pages.profile.super_admin', compact('user')),
                 default       => abort(404, "User type not recognized"),
             };

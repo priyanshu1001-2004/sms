@@ -62,6 +62,14 @@ class TeacherController extends Controller
                 $resumePath = $request->file('resume')->store('uploads/teachers/resumes', 'public');
             }
 
+            $teacherId = CodeGenerator(
+                'users',            
+                'username',         
+                "TCH",              
+                4,                   
+                $orgId               
+            );
+
             // 2. Create User Account
             $user = User::create([
                 'name'            => trim($request->first_name . ' ' . $request->last_name),
@@ -70,6 +78,7 @@ class TeacherController extends Controller
                 'password'        => Hash::make($request->password),
                 'organization_id' => $orgId,
                 'user_type'       => 'teacher',
+                'username'        => $teacherId
             ]);
 
             $user->assignRole('teacher');
@@ -93,6 +102,7 @@ class TeacherController extends Controller
                 'teacher_photo'            => $photoPath,
                 'resume_path'              => $resumePath,
                 'note'                     => $request->note,
+                'code'                     => $teacherId,
                 'created_by'               => auth()->id(),
             ]);
 

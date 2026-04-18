@@ -218,10 +218,7 @@
                         <div class="col-12">
                             <h6 class="text-primary border-bottom pb-2">Academic Information</h6>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Admission Number <span class="text-danger">*</span></label>
-                            <input type="text" name="admission_number" class="form-control" data-rules="required">
-                        </div>
+                       
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Roll Number</label>
                             <input type="text" name="roll_number" class="form-control">
@@ -344,7 +341,7 @@
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Admission Number <span class="text-danger">*</span></label>
                             <input type="text" name="admission_number" id="edit_admission_number" class="form-control"
-                                data-rules="required">
+                                data-rules="required" disabled>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Roll Number</label>

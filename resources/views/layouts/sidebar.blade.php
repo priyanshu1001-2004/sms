@@ -25,165 +25,164 @@
                             class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Dashboard</span></a>
                 </li>
 
+                @role('super_admin')
+                <li class="sub-category">
+                    <h3>SaaS Management</h3>
+                </li>
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('organizations.*') ? 'active' : '' }}"
+                        href="{{ route('organizations.index') }}">
+                        <i class="side-menu__icon fe fe-box"></i>
+                        <span class="side-menu__label">Organizations</span>
+                    </a>
+                </li>
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('subscriptions.*') ? 'active' : '' }}"
+                        href="{{ route('subscriptions.index') }}">
+                        <i class="side-menu__icon fe fe-credit-card"></i>
+                        <span class="side-menu__label">Subscriptions</span>
+                    </a>
+                </li>
+                @endrole
+
+
+
                 @hasrole('master_admin')
-
-                <li class="slide">
-                    <a class="side-menu__item has-link" data-bs-toggle="slide" href="{{ route('admins.index') }}"><i
-                            class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Admin</span></a>
+                <li class="sub-category">
+                    <h3>School Management</h3>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item has-link" data-bs-toggle="slide" href="{{ route('teachers.index') }}"><i
-                            class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Teachers</span></a>
+                    <a class="side-menu__item has-link {{ request()->routeIs('admins.*') ? 'active' : '' }}"
+                        href="{{ route('admins.index') }}">
+                        <i class="side-menu__icon fe fe-user-check"></i>
+                        <span class="side-menu__label">Staff Admins</span>
+                    </a>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item has-link" data-bs-toggle="slide" href="{{ route('students.index') }}"><i
-                            class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Student</span></a>
+                    <a class="side-menu__item has-link {{ request()->routeIs('teachers.*') ? 'active' : '' }}"
+                        href="{{ route('teachers.index') }}">
+                        <i class="side-menu__icon fe fe-briefcase"></i>
+                        <span class="side-menu__label">Teachers</span>
+                    </a>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item has-link" data-bs-toggle="slide" href="{{ route('parents.index') }}"><i
-                            class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Parents</span></a>
+                    <a class="side-menu__item has-link {{ request()->routeIs('students.*') ? 'active' : '' }}"
+                        href="{{ route('students.index') }}">
+                        <i class="side-menu__icon fe fe-users"></i>
+                        <span class="side-menu__label">Students</span>
+                    </a>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0)"><i
-                            class="side-menu__icon fe fe-slack"></i><span class="side-menu__label">Acadmic</span><i
-                            class="angle fe fe-chevron-right"></i></a>
+                    <a class="side-menu__item has-link {{ request()->routeIs('parents.*') ? 'active' : '' }}"
+                        href="{{ route('parents.index') }}">
+                        <i class="side-menu__icon fe fe-user-plus"></i>
+                        <span class="side-menu__label">Parents</span>
+                    </a>
+                </li>
+
+                <li
+                    class="slide {{ request()->is('academic*') || request()->is('classes*') || request()->is('subjects*') ? 'is-expanded' : '' }}">
+                    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0)">
+                        <i class="side-menu__icon fe fe-book-open"></i>
+                        <span class="side-menu__label">Academic Engine</span>
+                        <i class="angle fe fe-chevron-right"></i>
+                    </a>
                     <ul class="slide-menu">
-                        @hasrole('master_admin')
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('academic-years.index') }}"><i
-                                    class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Academic
-                                    Years</span></a>
+                        <li><a href="{{ route('academic-years.index') }}" class="slide-item">Academic Years</a></li>
+                        <li><a href="{{ route('classes.index') }}" class="slide-item">Classes & Sections</a></li>
+                        <li><a href="{{ route('subjects.index') }}" class="slide-item">Subjects List</a></li>
+                        <li><a href="{{ route('class_subjects.index') }}" class="slide-item">Assign Class Subject</a>
                         </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('classes.index') }}"><i class="side-menu__icon fe fe-home"></i><span
-                                    class="side-menu__label ">Classes</span></a>
+                        <li><a href="{{ route('time_slots.index') }}" class="slide-item">Time Slots</a></li>
+                        <li><a href="{{ route('class_timetables.index') }}" class="slide-item">Class Timetable</a></li>
+                        <li><a href="{{ route('class_teachers.index') }}" class="slide-item">Assign Class Teacher</a>
                         </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('subjects.index') }}"><i class="side-menu__icon fe fe-home"></i><span
-                                    class="side-menu__label">Subjects</span></a>
-                        </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('class_subjects.index') }}"><i
-                                    class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Assign Class
-                                    Subject</span></a>
-                        </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('time_slots.index') }}"><i class="side-menu__icon fe fe-home"></i><span
-                                    class="side-menu__label">Time
-                                    Slot</span></a>
-                        </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('class_timetables.index') }}"><i
-                                    class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Class
-                                    Timetable</span></a>
-                        </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('class_teachers.index') }}"><i
-                                    class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Assign Class
-                                    Teacher</span></a>
-                        </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('subject_teachers.index') }}"><i
-                                    class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Assign Subject
-                                    Teachers</span></a>
-                        </li>
-
-                        @endhasrole
+                        <li><a href="{{ route('subject_teachers.index') }}" class="slide-item">Assign Subject
+                                Teachers</a></li>
                     </ul>
                 </li>
 
-                <li class="slide">
-                    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0)"><i
-                            class="side-menu__icon fe fe-slack"></i><span class="side-menu__label">Examinations</span><i
-                            class="angle fe fe-chevron-right"></i></a>
+                <li class="slide {{ request()->is('exams*') || request()->is('grades*') ? 'is-expanded' : '' }}">
+                    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0)">
+                        <i class="side-menu__icon fe fe-file-text"></i>
+                        <span class="side-menu__label">Examinations</span>
+                        <i class="angle fe fe-chevron-right"></i>
+                    </a>
                     <ul class="slide-menu">
-                        @hasrole('master_admin')
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('exams.index') }}"><i class="side-menu__icon fe fe-home"></i><span
-                                    class="side-menu__label">Exam List
-                                </span></a>
+                        <li><a href="{{ route('exams.index') }}" class="slide-item">Exam List</a></li>
+                        <li><a href="{{ route('grades.index') }}" class="slide-item">Grade System</a></li>
+                        <li><a href="{{ route('exam-results.index') }}" class="slide-item">Bulk Mark Entry</a></li>
+                        <li><a href="{{ route('exam-results.student-wise') }}" class="slide-item">Student-wise Entry</a>
                         </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('grades.index') }}"><i class="side-menu__icon fe fe-home"></i><span
-                                    class="side-menu__label">Grade
-                                </span></a>
-                        </li>
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('exam-results.index') }}"><i class="side-menu__icon fe fe-home"></i><span
-                                    class="side-menu__label"> Mark Entry
-                                </span></a>
-                        </li>
-
-
-                        <li class="slide">
-                            <a class="side-menu__item has-link" data-bs-toggle="slide" style="padding: 8px 0px;"
-                                href="{{ route('exam-results.student-wise') }}"><i
-                                    class="side-menu__icon fe fe-home"></i><span class="side-menu__label"> Student-wise
-                                    Entry
-                                </span></a>
-                        </li>
-
-
-
-
-
-                        @endhasrole
                     </ul>
                 </li>
-
                 @endhasrole
 
 
 
-
-
-                @hasrole('super_admin')
-                <li class="slide">
-                    <a class="side-menu__item has-link" data-bs-toggle="slide"
-                        href="{{ route('organizations.index') }}"><i class="side-menu__icon fe fe-home"></i><span
-                            class="side-menu__label">Organizations</span></a>
+                @hasrole('admin')
+                <li class="sub-category">
+                    <h3>Staff Workspace</h3>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item has-link" data-bs-toggle="slide"
-                        href="{{ route('subscriptions.index') }}"><i class="side-menu__icon fe fe-home"></i><span
-                            class="side-menu__label">Subscriptions</span></a>
+                    <a class="side-menu__item has-link {{ request()->routeIs('students.*') ? 'active' : '' }}"
+                        href="{{ route('students.index') }}">
+                        <i class="side-menu__icon fe fe-users"></i>
+                        <span class="side-menu__label">Student Admission</span>
+                    </a>
+                </li>
+
+                <li class="slide">
+                    <a class="side-menu__item has-link {{ request()->routeIs('parents.*') ? 'active' : '' }}"
+                        href="{{ route('parents.index') }}">
+                        <i class="side-menu__icon fe fe-user-plus"></i>
+                        <span class="side-menu__label">Parent Directory</span>
+                    </a>
+                </li>
+
+                <li
+                    class="slide {{ request()->is('time*') || request()->is('class-timetables*') ? 'is-expanded' : '' }}">
+                    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0)">
+                        <i class="side-menu__icon fe fe-calendar"></i>
+                        <span class="side-menu__label">Schedules</span>
+                        <i class="angle fe fe-chevron-right"></i>
+                    </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{ route('time_slots.index') }}" class="slide-item">Manage Time Slots</a></li>
+                        <li><a href="{{ route('class_timetables.index') }}" class="slide-item">Class Timetables</a></li>
+                    </ul>
+                </li>
+
+                <li class="slide {{ request()->is('exam-results*') ? 'is-expanded' : '' }}">
+                    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0)">
+                        <i class="side-menu__icon fe fe-edit"></i>
+                        <span class="side-menu__label">Exam Records</span>
+                        <i class="angle fe fe-chevron-right"></i>
+                    </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{ route('exam-results.index') }}" class="slide-item">Bulk Mark Entry</a></li>
+                        <li><a href="{{ route('exam-results.student-wise') }}" class="slide-item">Student-wise Entry</a>
+                        </li>
+                    </ul>
                 </li>
                 @endhasrole
 
 
-                @hasrole('teacher')
+                @role('teacher')
+                <li class="sub-category">
+                    <h3>Teacher Portal</h3>
+                </li>
+
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->is('my-assignments') ? 'active' : '' }}"
+                    <a class="side-menu__item {{ request()->routeIs('teacher.assignments') ? 'active' : '' }}"
                         href="{{ route('teacher.assignments') }}">
                         <i class="side-menu__icon fe fe-book"></i>
-                        <span class="side-menu__label">My Class & Subject</span>
+                        <span class="side-menu__label">My Classes & Subjects</span>
                     </a>
                 </li>
 
@@ -196,58 +195,54 @@
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item" href="{{ route('teacher.timetable') }}">
-                        <i class="side-menu__icon fe fe-book-open"></i>
+                    <a class="side-menu__item {{ request()->routeIs('teacher.timetable') ? 'active' : '' }}"
+                        href="{{ route('teacher.timetable') }}">
+                        <i class="side-menu__icon fe fe-clock"></i>
                         <span class="side-menu__label">My Schedule</span>
                     </a>
                 </li>
 
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->is('exams/mark-entry*') ? 'active' : '' }}"
-                        href="{{ route('exam-results.index') }}">
+                <li class="slide {{ request()->is('exams*') || request()->is('teacher/exam*') ? 'is-expanded' : '' }}">
+                    <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0)">
                         <i class="side-menu__icon fe fe-edit-3"></i>
-                        <span class="side-menu__label">Bulk Mark Entry</span>
+                        <span class="side-menu__label">Grading & Exams</span>
+                        <i class="angle fe fe-chevron-right"></i>
                     </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{ route('exam-results.index') }}" class="slide-item">Bulk Mark Entry</a></li>
+                        <li><a href="{{ route('exam-results.student-wise') }}" class="slide-item">Student-wise Entry</a>
+                        </li>
+                        <li><a href="{{ route('teacher.exam.timetable') }}" class="slide-item">Exam Timetable</a></li>
+                    </ul>
                 </li>
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->is('exams/student-wise*') ? 'active' : '' }}"
-                        href="{{ route('exam-results.student-wise') }}">
-                        <i class="side-menu__icon fe fe-user-check"></i>
-                        <span class="side-menu__label">Student-wise Entry</span>
-                    </a>
+                @endrole
+
+                @role('student')
+                <li class="sub-category">
+                    <h3>Student Learning Hub</h3>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->is('teacher/exam-timetable*') ? 'active' : '' }}"
-                        href="{{ route('teacher.exam.timetable') }}">
-                        <i class="side-menu__icon fe fe-calendar"></i> {{-- Changed icon to calendar --}}
-                        <span class="side-menu__label">Exam Timetable</span>
-                    </a>
-                </li>
-                @endhasrole
-
-                @hasrole('student')
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->is('my-subjects') ? 'active' : '' }}"
+                    <a class="side-menu__item {{ request()->routeIs('student.subjects') ? 'active' : '' }}"
                         href="{{ route('student.subjects') }}">
-                        <i class="side-menu__icon fe fe-book"></i>
+                        <i class="side-menu__icon fe fe-book-open"></i>
                         <span class="side-menu__label">My Subjects</span>
                     </a>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->is('student/my-timetable') ? 'active' : '' }}"
+                    <a class="side-menu__item {{ request()->routeIs('student.timetable') ? 'active' : '' }}"
                         href="{{ route('student.timetable') }}">
                         <i class="side-menu__icon fe fe-calendar"></i>
-                        <span class="side-menu__label">My Timetable</span>
+                        <span class="side-menu__label">Class Timetable</span>
                     </a>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item {{ Request::is('my-results*') ? 'active' : '' }}"
+                    <a class="side-menu__item {{ request()->is('my-results*') ? 'active' : '' }}"
                         href="{{ route('student.results') }}">
                         <i class="side-menu__icon fe fe-award"></i>
-                        <span class="side-menu__label">My Results</span>
+                        <span class="side-menu__label">My Report Card</span>
                     </a>
                 </li>
 
@@ -255,25 +250,40 @@
                     <a class="side-menu__item {{ request()->is('student/exam-timetable*') ? 'active' : '' }}"
                         href="{{ route('student.exam.timetable') }}">
                         <i class="side-menu__icon fe fe-clock"></i>
-                        <span class="side-menu__label">My Exam Schedule</span>
+                        <span class="side-menu__label">Exam Schedule</span>
                     </a>
                 </li>
+                @endrole
 
-                @endhasrole
-
-                @hasrole('parent')
-                <li class="slide">
-                    <a class="side-menu__item has-link" data-bs-toggle="slide" href="{{ route('parents.students') }}"><i
-                            class="side-menu__icon fe fe-home"></i><span class="side-menu__label">Students</span></a>
+                @role('parent')
+                <li class="sub-category">
+                    <h3>Parent Workspace</h3>
                 </li>
 
                 <li class="slide">
-                    <a class="side-menu__item" href="{{ route('parent.results') }}">
+                    <a class="side-menu__item {{ request()->routeIs('parents.students') ? 'active' : '' }}"
+                        href="{{ route('parents.students') }}">
                         <i class="side-menu__icon fe fe-users"></i>
-                        <span class="side-menu__label">Student Results</span>
+                        <span class="side-menu__label">My Children</span>
                     </a>
                 </li>
-                @endhasrole
+
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('parent.results') ? 'active' : '' }}"
+                        href="{{ route('parent.results') }}">
+                        <i class="side-menu__icon fe fe-award"></i>
+                        <span class="side-menu__label">Academic Results</span>
+                    </a>
+                </li>
+
+                <!-- <li class="slide">
+                    <a class="side-menu__item" href="javascript:void(0)">
+                        <i class="side-menu__icon fe fe-credit-card"></i>
+                        <span class="side-menu__label">Fee Payments</span>
+                        <span class="badge bg-warning text-dark ms-2" style="font-size: 9px;">Coming Soon</span>
+                    </a>
+                </li> -->
+                @endrole
 
                 <li class="sub-category">
                     <h3>Setting</h3>

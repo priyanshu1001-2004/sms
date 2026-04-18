@@ -10,24 +10,58 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'phone'    => ['required'],
-            'password' => ['required'],
+        $request->validate([
+            'login_id' => ['required', 'string'],
+            'password' => ['required', 'string'],
+            'role'     => ['required', 'string'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        $field = match ($request->role) {
+            'parent', 'super_admin'  => 'phone',
+            'student', 'teacher'     => 'username',
+            'admin', 'master_admin'  => 'email',
+            default                  => 'email',
+        };
+
+        $credentials = [
+            $field     => $request->login_id,
+            'password' => $request->password,
+        ];
+
+        // dd($request->all(), $field, $credentials);
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $user = Auth::user();
 
+            // dd($user);
+
+            $allowed = false;
+
+            if ($request->role === 'admin') {
+                if ($user->hasAnyRole(['admin', 'master_admin'])) {
+                    $allowed = true;
+                }
+            } else {
+                if ($user->hasRole($request->role)) {
+                    $allowed = true;
+                }
+            }
+
+            if (!$allowed) {
+                Auth::logout();
+                return back()->withErrors(['login_id' => 'Unauthorized access for the selected role.']);
+            }
+
             $role = $user->getRoleNames()->first();
+           
 
             switch ($role) {
                 case 'super_admin':
+                    // dd('test');
                     session(['impersonator_id' => $user->id]);
                     return redirect()->route('dashboard');
 
@@ -46,18 +80,16 @@ class UserController extends Controller
                 case 'student':
                     return redirect()->route('dashboard');
 
-                case 'staff':
-                    return redirect()->route('dashboard');
-
                 default:
                     Auth::logout();
-                    return back()->withErrors(['phone' => 'Access denied. Role not configured.']);
+                    return back()->withErrors(['login_id' => 'Access denied. Role not configured.']);
             }
         }
 
+        // 5. Fail Response
         return back()->withErrors([
-            'phone' => 'The provided credentials do not match our records.',
-        ])->onlyInput('phone');
+            'login_id' => 'The provided credentials do not match our records.',
+        ])->onlyInput('login_id');
     }
 
     public function switch(Request $request)

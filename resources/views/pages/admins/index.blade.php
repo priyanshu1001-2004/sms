@@ -49,7 +49,7 @@
                                             <td>{{ $index + 1 }}</td>
                                             <td>{{ $admin->name }}</td>
                                             <td>{{ $admin->email }}</td>
-                                            <td>{{ $admin->phone }}</td>
+                                            <td>{{ $admin?->user->phone ?? '' }}</td>
 
                                             <td>
                                                 <span class="badge bg-{{ $admin->status ? 'success' : 'danger' }}">
@@ -62,7 +62,7 @@
                                             <td>
                                                 <button class="btn btn-sm btn-info-light edit-btn"
                                                     data-id="{{ $admin->id }}" data-name="{{ $admin->name }}"
-                                                    data-email="{{ $admin->email }}" data-phone="{{ $admin->phone }}"
+                                                    data-email="{{ $admin->email }}" data-phone="{{ $admin->user->phone }}"
                                                     data-status="{{ $admin->status ? 1 : 0 }}"
                                                     data-description="{{ $admin->description }}"
                                                     >
@@ -146,8 +146,6 @@
                             <input type="password" name="password_confirmation" class="form-control"
                                 data-rules="required|same:password">
                         </div>
-
-
 
 
                         <div class="mb-3 col-12">

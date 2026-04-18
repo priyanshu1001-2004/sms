@@ -179,14 +179,13 @@ Route::middleware(['auth'])->group(function () {
     | Organization (Restricted Roles)
     |--------------------------------------------------------------------------
     */
-    Route::middleware('role:super_admin|admin|master_admin')->group(function () {
 
+
+    Route::middleware('role:super_admin|master_admin')->group(function () {
         Route::resource('organizations', OrganizationController::class);
-
-        Route::post('organizations/{id}/toggle-status', [
-            OrganizationController::class,
-            'toggleStatus'
-        ])->name('organizations.toggleStatus');
+        Route::post('organizations/{id}/toggle-status', [OrganizationController::class, 'toggleStatus'])->name('organizations.toggleStatus');
+        Route::put('organization/update-full', [OrganizationController::class, 'updateFullProfile'])->name('organization.update.full');
+        Route::put('organization/update-logo', [OrganizationController::class, 'updateLogo'])->name('organization.update.logo');
     });
 
     /*

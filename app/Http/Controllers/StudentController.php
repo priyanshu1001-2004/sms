@@ -42,49 +42,53 @@ class StudentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'admission_number' => 'required|string|max:255',
-            'class_id'         => 'required|exists:classes,id',
-            'roll_number'      => 'required|string|max:50', // Added roll number validation
-            'first_name'       => 'required|string|max:255',
-            'last_name'        => 'required|string|max:255',
-            'gender'           => 'required|string',
-            'date_of_birth'    => 'required|date',
-            'admission_date'   => 'required|date',
-            'email'            => 'required|email|unique:users,email',
-            'password'         => 'required|min:6',
-            'student_photo'    => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'class_id'       => 'required|exists:classes,id',
+            'roll_number'    => 'required|string|max:50',
+            'first_name'     => 'required|string|max:255',
+            'last_name'      => 'required|string|max:255',
+            'gender'         => 'required|string',
+            'date_of_birth'  => 'required|date',
+            'admission_date' => 'required|date',
+            'email'          => 'required|email|unique:users,email',
+            'password'       => 'required|min:6',
+            'student_photo'  => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'mobile_number'  => 'nullable|string|max:15',
         ]);
 
         DB::beginTransaction();
         try {
             $orgId = currentOrgId();
 
-            // 1. Check for Duplicate Admission Number in Org
-            $exists = Student::where('organization_id', $orgId)
-                ->where('admission_number', $request->admission_number)
-                ->exists();
-
-            if ($exists) {
-                return response()->json(['status' => false, 'message' => 'Admission number already exists.'], 422);
-            }
-
-            // 2. NEW: Check for Duplicate Roll Number in the SAME Class
+            // 1. Roll Number Check (Class-wise uniqueness in the same Org)
             $rollExists = Student::where('organization_id', $orgId)
                 ->where('class_id', $request->class_id)
                 ->where('roll_number', $request->roll_number)
                 ->exists();
 
             if ($rollExists) {
-                return response()->json(['status' => false, 'message' => 'This Roll Number is already assigned to another student in this class.'], 422);
+                return response()->json(['status' => false, 'message' => 'This Roll Number is already assigned in this class.'], 422);
             }
 
+            // 2. Generate Admission Number FIRST
+            $year = date('Y');
+            $orgId = currentOrgId();
+
+            $admissionNumber = CodeGenerator(
+                'users',            
+                'username',         
+                "STU{$year}",        
+                4,                  
+                $orgId              
+            );
+            // 3. Handle Photo Upload
             $photoPath = null;
             if ($request->hasFile('student_photo')) {
                 $file = $request->file('student_photo');
-                $fileName = time() . '_' . $request->admission_number . '.' . $file->getClientOriginalExtension();
+                $fileName = time() . '_' . $admissionNumber . '.' . $file->getClientOriginalExtension();
                 $photoPath = $file->storeAs('uploads/students', $fileName, 'public');
             }
 
+            // 4. Create User (The Identity)
             $user = User::create([
                 'name'            => trim($request->first_name . ' ' . $request->last_name),
                 'email'           => $request->email,
@@ -92,14 +96,16 @@ class StudentController extends Controller
                 'password'        => Hash::make($request->password),
                 'organization_id' => $orgId,
                 'user_type'       => 'student',
+                'username'        => $admissionNumber // Use Generated Code for Login
             ]);
 
             $user->assignRole('student');
 
+            // 5. Create Student Profile (The Meta Data)
             $student = Student::create([
                 'user_id'          => $user->id,
                 'organization_id'  => $orgId,
-                'admission_number' => $request->admission_number,
+                'admission_number' => $admissionNumber,
                 'roll_number'      => $request->roll_number,
                 'class_id'         => $request->class_id,
                 'first_name'       => trim($request->first_name),
@@ -117,14 +123,22 @@ class StudentController extends Controller
                 'created_by'       => auth()->id(),
             ]);
 
-            auditLog(module: 'Students', action: 'Admission', recordId: $student->id, new: $student->toArray(), description: "Admitted student: {$user->name}", event: 'student_admission');
+            // Audit Log for extra security
+            auditLog(
+                module: 'Students',
+                action: 'Admission',
+                recordId: $student->id,
+                new: $student->toArray(),
+                description: "Admitted student: {$user->name} with ID: {$admissionNumber}",
+                event: 'student_admission'
+            );
 
             DB::commit();
-            return response()->json(['status' => true, 'message' => 'Student admitted successfully!']);
+            return response()->json(['status' => true, 'message' => "Student admitted successfully! ID: $admissionNumber"]);
         } catch (\Exception $e) {
             DB::rollBack();
-            if (isset($photoPath)) Storage::disk('public')->delete($photoPath);
-            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+            if ($photoPath) Storage::disk('public')->delete($photoPath);
+            return response()->json(['status' => false, 'message' => 'Admission failed: ' . $e->getMessage()], 500);
         }
     }
 

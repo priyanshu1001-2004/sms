@@ -17,6 +17,8 @@ return new class extends Migration
             // Multi-tenancy & User Link
             $table->foreignId('organization_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->string('code');
+
 
             // Personal Information
             $table->string('teacher_photo')->nullable();
