@@ -2,16 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Database\Factories\ParentFactory;
 
 class ParentModal extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasFactory;
 
     protected $table = 'parents';
 
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
+
+    protected static function newFactory()
+    {
+        return ParentFactory::new();
+    }
 
     // Multi-tenancy Scope
     protected static function booted()

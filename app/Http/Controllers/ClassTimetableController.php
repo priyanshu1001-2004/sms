@@ -16,27 +16,48 @@ class ClassTimetableController extends Controller
      */
     public function index(Request $request)
     {
-        $classes = Classes::all();
+        // 1. Saari active classes uthayein filter ke liye
+        $classes = Classes::with('timetableGroup')->where('status', 1)->get();
         $days = WeekDay::orderBy('sort_order')->get();
-        $slots = TimeSlot::orderBy('start_time')->get();
         $allTeachers = Teacher::where('status', 1)->get();
 
         $selectedClass = $request->class_id;
+        $slots = collect(); // Default khali collection
         $timetableData = [];
+        $activeGroup = null;
 
         if ($selectedClass) {
-            // Fetch existing entries for the grid
-            $entries = ClassTimetable::with(['subject', 'teacher'])
-                ->where('class_id', $selectedClass)
-                ->get();
+            // 2. Selected class ka data nikalte hain taaki uska Group pata chale
+            $classData = Classes::with('timetableGroup')->find($selectedClass);
 
-            // Organize by Day and Slot for easy grid lookup
-            foreach ($entries as $entry) {
-                $timetableData[$entry->week_day_id][$entry->time_slot_id] = $entry;
+            if ($classData && $classData->timetable_group_id) {
+                $activeGroup = $classData->timetableGroup;
+
+                // 3. Sabse Important: Sirf wahi slots uthayein jo is class ke assigned Group mein hain
+                $slots = TimeSlot::where('timetable_group_id', $classData->timetable_group_id)
+                    ->orderBy('start_time')
+                    ->get();
+
+                // 4. Existing timetable entries fetch karein grid populate karne ke liye
+                $entries = ClassTimetable::with(['subject', 'teacher'])
+                    ->where('class_id', $selectedClass)
+                    ->get();
+
+                foreach ($entries as $entry) {
+                    $timetableData[$entry->week_day_id][$entry->time_slot_id] = $entry;
+                }
             }
         }
 
-        return view('pages.timetable.index', compact('classes', 'days', 'slots', 'timetableData', 'selectedClass', 'allTeachers'));
+        return view('pages.timetable.index', compact(
+            'classes',
+            'days',
+            'slots',
+            'timetableData',
+            'selectedClass',
+            'allTeachers',
+            'activeGroup'
+        ));
     }
 
     /**
@@ -60,35 +81,53 @@ class ClassTimetableController extends Controller
             'time_slot_id' => 'required',
         ]);
 
-        $conflict = ClassTimetable::where([
-            'week_day_id' => $request->week_day_id,
-            'time_slot_id' => $request->time_slot_id,
-        ])
-            ->where('id', '!=', $request->entry_id)
-            ->where(function ($q) use ($request) {
-                $q->where('teacher_id', $request->teacher_id)
-                    ->orWhere('class_id', $request->class_id);
+        // 1. Current Slot ki timings fetch karein
+        $newSlot = TimeSlot::findOrFail($request->time_slot_id);
+        $entryId = $request->entry_id; // Edit mode ke liye
+
+        // 2. TEACHER FREE CHECK (The Main Logic)
+        $conflict = ClassTimetable::where('week_day_id', $request->week_day_id)
+            ->where('id', '!=', $entryId) // Edit karte waqt khud se conflict na ho
+            ->where(function ($query) use ($request, $newSlot) {
+
+                $query->where(function ($q) use ($request, $newSlot) {
+                    $q->where('teacher_id', $request->teacher_id)
+                        ->whereHas('timeSlot', function ($t) use ($newSlot) {
+                            $t->where('start_time', '<', $newSlot->end_time)
+                                ->where('end_time', '>', $newSlot->start_time);
+                        });
+                })
+                    ->orWhere(function ($q) use ($request) {
+                        $q->where('class_id', $request->class_id)
+                            ->where('time_slot_id', $request->time_slot_id);
+                    });
             })->first();
 
         if ($conflict) {
-            return response()->json(['status' => false, 'message' => 'This slot or teacher is already occupied!']);
+            $teacherName = $conflict->teacher->first_name . ' ' . $conflict->teacher->last_name;
+            $className = $conflict->class->name;
+
+            $errorMsg = ($conflict->teacher_id == $request->teacher_id)
+                ? "Conflict: {$teacherName} is already busy in Class {$className} at this time!"
+                : "Conflict: This class slot is already occupied by another subject.";
+
+            return response()->json(['status' => false, 'message' => $errorMsg], 422);
         }
 
-        // Use updateOrCreate
         ClassTimetable::updateOrCreate(
-            ['id' => $request->entry_id],
+            ['id' => $entryId],
             [
                 'organization_id' => currentOrgId(),
-                'class_id' => $request->class_id,
-                'subject_id' => $request->subject_id,
-                'teacher_id' => $request->teacher_id,
-                'week_day_id' => $request->week_day_id,
-                'time_slot_id' => $request->time_slot_id,
-                'room_number' => $request->room_number,
+                'class_id'       => $request->class_id,
+                'subject_id'     => $request->subject_id,
+                'teacher_id'     => $request->teacher_id,
+                'week_day_id'    => $request->week_day_id,
+                'time_slot_id'   => $request->time_slot_id,
+                'room_number'    => $request->room_number,
             ]
         );
 
-        return response()->json(['status' => true, 'message' => 'Timetable entry saved successfully!']);
+        return response()->json(['status' => true, 'message' => 'Assignment successful!']);
     }
 
     /**
@@ -110,9 +149,13 @@ class ClassTimetableController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ClassTimetable $classTimetable)
+    public function update(Request $request, $id)
     {
-        //
+
+        $request->merge(['entry_id' => $id]);
+
+
+        return $this->store($request);
     }
 
     /**

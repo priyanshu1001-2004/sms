@@ -12,9 +12,30 @@ class SubjectController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $subjects = Subject::paginate(10);
+        $query = Subject::query();
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(code) like ?', ["%{$search}%"]);
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $subjects = $query->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
         return view('pages.subjects.index', compact('subjects'));
     }
 

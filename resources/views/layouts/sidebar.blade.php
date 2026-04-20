@@ -92,17 +92,24 @@
                         <i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
+                        {{-- Step 1: Basic Setup (Masters) --}}
                         <li><a href="{{ route('academic-years.index') }}" class="slide-item">Academic Years</a></li>
+                        <li><a href="{{ route('timetable-groups.index') }}" class="slide-item">Timetable Groups</a></li>
                         <li><a href="{{ route('classes.index') }}" class="slide-item">Classes & Sections</a></li>
-                        <li><a href="{{ route('subjects.index') }}" class="slide-item">Subjects List</a></li>
-                        <li><a href="{{ route('class_subjects.index') }}" class="slide-item">Assign Class Subject</a>
-                        </li>
-                        <li><a href="{{ route('time_slots.index') }}" class="slide-item">Time Slots</a></li>
-                        <li><a href="{{ route('class_timetables.index') }}" class="slide-item">Class Timetable</a></li>
-                        <li><a href="{{ route('class_teachers.index') }}" class="slide-item">Assign Class Teacher</a>
+                        <li><a href="{{ route('subjects.index') }}" class="slide-item">Subjects Master</a></li>
+
+                        {{-- Step 2: Resource Allocation (Mapping) --}}
+
+                        <li><a href="{{ route('class_subjects.index') }}" class="slide-item">Assign Class Subjects</a>
                         </li>
                         <li><a href="{{ route('subject_teachers.index') }}" class="slide-item">Assign Subject
                                 Teachers</a></li>
+                        <li><a href="{{ route('class_teachers.index') }}" class="slide-item">Assign Class Teachers</a>
+                        </li>
+
+                        {{-- Step 3: Timetable Configuration --}}
+                        <li><a href="{{ route('time_slots.index') }}" class="slide-item">Time Slots Master</a></li>
+                        <li><a href="{{ route('class_timetables.index') }}" class="slide-item">Manage Timetable</a></li>
                     </ul>
                 </li>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Board;
 use App\Models\Classes;
+use App\Models\TimetableGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -13,11 +14,33 @@ class ClassesController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $query = Classes::with(['timetableGroup']);
 
-        $classes = Classes::paginate(10);
-        return view('pages.classes.index', compact('classes'));
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(code) like ?', ["%{$search}%"]);
+            });
+        }
+
+        if ($request->filled('group_id')) {
+            $query->where('timetable_group_id', $request->group_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $classes = $query->orderBy('id', 'asc')
+            ->paginate(10)
+            ->withQueryString();
+
+        $groups = TimetableGroup::where('status', 1)->get();
+
+        return view('pages.classes.index', compact('classes', 'groups'));
     }
 
     /**
@@ -40,7 +63,8 @@ class ClassesController extends Controller
                 'max:255',
                 Rule::unique('classes')->where('organization_id', currentOrgId())
             ],
-            'status' => 'required|boolean',
+            'timetable_group_id' => 'required|exists:timetable_groups,id', // Group validation
+            'status'             => 'required|boolean',
         ]);
 
         DB::beginTransaction();
@@ -48,11 +72,12 @@ class ClassesController extends Controller
             $generatedCode = CodeGenerator('classes', 'code', 'CLS-', 4, currentOrgId());
 
             $class = Classes::create([
-                'organization_id' => currentOrgId(),
-                'code'            => $generatedCode,
-                'name'            => trim($request->name),
-                'status'          => $request->status,
-                'created_by'      => auth()->id(),
+                'organization_id'    => currentOrgId(),
+                'timetable_group_id' => $request->timetable_group_id,
+                'code'               => $generatedCode,
+                'name'               => trim($request->name),
+                'status'             => $request->status,
+                'created_by'         => auth()->id(),
             ]);
 
             // Audit Log for Creation
@@ -61,7 +86,7 @@ class ClassesController extends Controller
                 action: 'Create',
                 recordId: $class->id,
                 new: $class->toArray(),
-                description: "Created new class: {$class->name} with code {$generatedCode}",
+                description: "Created new class: {$class->name} with group ID: {$request->timetable_group_id}",
                 event: 'class_created'
             );
 
@@ -103,19 +128,21 @@ class ClassesController extends Controller
                 'max:255',
                 Rule::unique('classes')->where('organization_id', currentOrgId())->ignore($id)
             ],
-            'status' => 'required|boolean',
+            'timetable_group_id' => 'required|exists:timetable_groups,id', // Group validation
+            'status'             => 'required|boolean',
         ]);
 
         DB::beginTransaction();
         try {
-            $oldData = $class->only(['name', 'status']);
+            $oldData = $class->only(['name', 'status', 'timetable_group_id']);
 
             $class->update([
-                'name'   => trim($request->name),
-                'status' => $request->status,
+                'name'               => trim($request->name),
+                'timetable_group_id' => $request->timetable_group_id,
+                'status'             => $request->status,
             ]);
 
-            $newData = $class->only(['name', 'status']);
+            $newData = $class->only(['name', 'status', 'timetable_group_id']);
 
             auditLog(
                 module: 'Classes',
@@ -123,7 +150,7 @@ class ClassesController extends Controller
                 recordId: $class->id,
                 old: $oldData,
                 new: $newData,
-                description: "Updated class: {$class->name}",
+                description: "Updated class: {$class->name} and assigned schedule group",
                 event: 'class_updated'
             );
 
@@ -131,7 +158,7 @@ class ClassesController extends Controller
             return response()->json(['status' => true, 'message' => 'Class updated successfully']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => false, 'message' => 'Update failed'], 500);
+            return response()->json(['status' => false, 'message' => 'Update failed: ' . $e->getMessage()], 500);
         }
     }
     /**

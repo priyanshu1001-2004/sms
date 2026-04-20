@@ -26,4 +26,9 @@ class TimeSlot extends Model
             }
         });
     }
+
+    public function group()
+    {
+        return $this->belongsTo(TimetableGroup::class, 'timetable_group_id');
+    }
 }

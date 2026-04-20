@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('time_slots', function (Blueprint $table) {
+        Schema::create('timetable_groups', function (Blueprint $table) {
             $table->id();
             $table->foreignId('organization_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->foreignId('timetable_group_id')->constrained('timetable_groups')->onDelete('cascade');
-            $table->boolean('is_break')->default(false);
+
+            $table->string('name'); 
+            $table->boolean('status')->default(1);
             $table->timestamps();
             $table->softDeletes();
+
+            $table->unique(['organization_id', 'name']);
         });
     }
 
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('time_slots');
+        Schema::dropIfExists('timetable_groups');
     }
 };

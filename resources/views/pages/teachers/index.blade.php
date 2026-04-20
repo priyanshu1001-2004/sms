@@ -21,6 +21,61 @@
                             </button>
                         </div>
 
+                        <div class="card border-0 mb-4">
+
+                            <div class="card-body">
+                                <form id="filterForm" action="{{ route('teachers.index') }}" method="GET">
+                                    <div class="row g-3">
+                                        <div class="col-md-2">
+                                            <input type="text" name="search" class="form-control"
+                                                placeholder="Name or Teacher Code" value="{{ request('search') }}">
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <input type="text" name="email" class="form-control"
+                                                placeholder="Email Address" value="{{ request('email') }}">
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <input type="date" name="joining_date" class="form-control"
+                                                title="Joining Date" value="{{ request('joining_date') }}">
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <select name="gender" class="form-control select2">
+                                                <option value="">All Genders</option>
+                                                <option value="Male" {{ request('gender')=='Male' ? 'selected' : '' }}>
+                                                    Male</option>
+                                                <option value="Female" {{ request('gender')=='Female' ? 'selected' : ''
+                                                    }}>Female</option>
+                                                <option value="Other" {{ request('gender')=='Other' ? 'selected' : ''
+                                                    }}>Other</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <select name="status" class="form-control select2">
+                                                <option value="">All Status</option>
+                                                <option value="1" {{ request('status')==='1' ? 'selected' : '' }}>Active
+                                                </option>
+                                                <option value="0" {{ request('status')==='0' ? 'selected' : '' }}>
+                                                    Inactive</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <button type="submit" class="btn btn-primary px-3">
+                                                <i class="fe fe-search me-1"></i>Search
+                                            </button>
+                                            <a href="{{ route('teachers.index') }}" class="btn btn-light px-3 btn-reset">
+                                                <i class="fe fe-refresh-cw me-1"></i>Reset
+                                            </a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         <div class="card-body pt-0" id="data-table-container">
                             <div class="table-responsive">
                                 <table class="table table-bordered text-nowrap border-bottom saas-table"
@@ -43,7 +98,7 @@
                                     <tbody>
                                         @forelse($teachers as $index => $teacher)
                                         <tr>
-                                            <td>{{ $teacher->code  }}</td>
+                                            <td>{{ $teacher->code }}</td>
                                             <td>
                                                 <img src="{{ $teacher->teacher_photo ? asset('storage/' . $teacher->teacher_photo) : asset('assets/images/users/default.png') }}"
                                                     alt="Photo" class="rounded-circle" width="40" height="40">

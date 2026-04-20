@@ -34,6 +34,16 @@ class Subscription extends Model
         });
     }
 
+    protected static function booted()
+    {
+        static::addGlobalScope('tenant', function ($builder) {
+            if (auth()->check() && !auth()->user()->hasRole('super_admin')) {
+                $table = $builder->getModel()->getTable();
+                $builder->where($table . '.organization_id', currentOrgId());
+            }
+        });
+    }
+
     public function organization()
     {
         return $this->belongsTo(Organization::class);

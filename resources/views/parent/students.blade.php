@@ -1,6 +1,93 @@
 @extends('layouts.master')
 
 @section('content')
+
+<style>
+    #timetableModal .modal-content {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    }
+
+    #timetableModal .modal-header {
+        border-bottom: 1px solid #f1f1f1;
+        padding: 1.5rem;
+    }
+
+    /* Table Modernizing */
+    #timetableModal .table {
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        /* Adds space between rows */
+    }
+
+    #timetableModal .table thead th {
+        border: none;
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 12px;
+    }
+
+    #timetableModal .day-cell {
+        border: none !important;
+        background: #fff !important;
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 0.7rem;
+        vertical-align: middle !important;
+    }
+
+    /* Slot Card inside Table */
+    .tt-slot-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-left: 3px solid #667eea;
+        border-radius: 8px;
+        padding: 8px 10px;
+        text-align: left;
+        transition: all 0.2s;
+    }
+
+    .tt-slot-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .tt-subject {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+
+    .tt-teacher {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .tt-room {
+        display: inline-block;
+        font-size: 0.65rem;
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #475569;
+    }
+
+    .tt-recess {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #d97706;
+        background: #fffbeb;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px dashed #fcd34d;
+    }
+</style>
+
 <div class="main-content app-content mt-0">
     <div class="side-app">
         <div class="main-container container-fluid">
@@ -127,26 +214,24 @@
 <div class="modal fade" id="timetableModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-warning text-white">
-                <h5 class="modal-title text-white">
-                    <i class="fe fe-calendar me-2"></i>Weekly Schedule: <span id="tt_student_name"></span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">x</button>
+            <div class="modal-header d-flex align-items-center">
+                <div class="avatar avatar-md brround bg-warning-transparent text-warning me-3">
+                    <i class="fe fe-calendar"></i>
+                </div>
+                <div>
+                    <h5 class="modal-title fw-bold text-dark mb-0" id="tt_student_name_title">Student Schedule</h5>
+                    <small class="text-muted">Weekly academic roadmap for <span id="tt_student_name"
+                            class="fw-bold"></span></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">x</button>
             </div>
-            <div class="modal-body">
-                <div class="table-responsive" id="tt_loading_area">
-                    <table class="table table-bordered text-center table-vcenter mb-0">
-                        <thead class="bg-light" id="timetable_header">
-                            {{-- Header generated via JS --}}
-                        </thead>
-                        <tbody id="timetable_content">
-                            {{-- Content generated via JS --}}
-                        </tbody>
+            <div class="modal-body p-4">
+                <div class="table-responsive">
+                    <table class="table text-center table-vcenter">
+                        <thead id="timetable_header"></thead>
+                        <tbody id="timetable_content"></tbody>
                     </table>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light shadow-sm" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -215,40 +300,49 @@
         let studentName = $(this).data('name');
 
         $('#tt_student_name').text(studentName);
-        $('#timetable_content').html('<tr><td colspan="10">Loading...</td></tr>');
+        $('#timetable_header').html('');
+        $('#timetable_content').html('<tr><td colspan="10" class="py-5"><div class="spinner-border text-primary spinner-border-sm"></div><br><span class="small text-muted">Fetching Data...</span></td></tr>');
         $('#timetableModal').modal('show');
 
         $.ajax({
             url: `/parents/student-timetable/${studentId}`,
             method: 'GET',
             success: function (res) {
-                let html = '';
+                // 1. Header
+                let headerHtml = '<tr><th class="day-cell">Day</th>';
+                res.slots.forEach(slot => {
+                    let time = (typeof moment !== "undefined") ? moment(slot.start_time, 'HH:mm:ss').format('hh:mm A') : slot.start_time;
+                    headerHtml += `<th><div class="mb-0">${slot.name}</div><div class="small fw-normal text-muted">${time}</div></th>`;
+                });
+                headerHtml += '</tr>';
+                $('#timetable_header').html(headerHtml);
 
+                // 2. Body
+                let bodyHtml = '';
                 res.days.forEach(day => {
-                    html += `<tr><td class="bg-light fw-bold text-primary">${day.name}</td>`;
+                    bodyHtml += `<tr><td class="day-cell text-uppercase">${day.name}</td>`;
 
                     res.slots.forEach(slot => {
                         let entry = (res.data[day.id] && res.data[day.id][slot.id]) ? res.data[day.id][slot.id] : null;
 
                         if (slot.is_break) {
-                            html += `<td class="bg-light-warning small fw-bold text-warning">RECESS</td>`;
+                            bodyHtml += `<td class="align-middle"><div class="tt-recess text-uppercase">Interval</div></td>`;
                         } else if (entry) {
-                            html += `<td>
-                            <div class="fw-bold text-dark">${entry.subject_name}</div>
-                            <div class="small text-muted">${entry.teacher_name}</div>
-                            <div class=" text-danger mt-1">Rm: ${entry.room}</div>
-                        </td>`;
+                            bodyHtml += `
+                            <td class="align-middle" style="min-width: 180px;">
+                                <div class="tt-slot-card">
+                                    <div class="tt-subject text-truncate">${entry.subject_name}</div>
+                                    <div class="tt-teacher text-truncate">${entry.teacher_name}</div>
+                                    <div class="mt-2"><span class="tt-room">Room: ${entry.room}</span></div>
+                                </div>
+                            </td>`;
                         } else {
-                            html += `<td><span class="text-muted">-</span></td>`;
+                            bodyHtml += `<td class="align-middle"><span class="text-light fs-10">---</span></td>`;
                         }
                     });
-                    html += `</tr>`;
+                    bodyHtml += `</tr>`;
                 });
-
-                $('#timetable_content').html(html);
-            },
-            error: function () {
-                $('#timetable_content').html('<tr><td colspan="10" class="text-danger">Failed to load.</td></tr>');
+                $('#timetable_content').html(bodyHtml);
             }
         });
     });

@@ -21,10 +21,59 @@
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h3 class="card-title">Subjects Management</h3>
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-                                <i class="fe fe-plus"></i> Add Class
+                                <i class="fe fe-plus"></i> Add Subject
                             </button>
                         </div>
 
+                        <div class="card shadow-sm border-0 mb-4">
+
+                            <div class="card-body">
+                                <form id="filterForm" action="{{ route('subjects.index') }}" method="GET">
+                                    <div class="row g-2">
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Subject Name/Code</label>
+                                            <input type="text" name="search" class="form-control form-control"
+                                                placeholder="e.g. Mathematics, MATH101" value="{{ request('search') }}">
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Subject Type</label>
+                                            <select name="type" class="form-control form-control-sm select2">
+                                                <option value="">All Types</option>
+                                                <option value="Theory" {{ request('type')=='Theory' ? 'selected' : ''
+                                                    }}>Theory</option>
+                                                <option value="Practical" {{ request('type')=='Practical' ? 'selected'
+                                                    : '' }}>Practical</option>
+                                                <option value="Both" {{ request('type')=='Both' ? 'selected' : '' }}>
+                                                    Both (Theory & Practical)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Status</label>
+                                            <select name="status" class="form-control form-control select2">
+                                                <option value="">All Status</option>
+                                                <option value="1" {{ request('status')==='1' ? 'selected' : '' }}>Active
+                                                </option>
+                                                <option value="0" {{ request('status')==='0' ? 'selected' : '' }}>
+                                                    Inactive</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label class="form-label d-block">&nbsp;</label> <button type="submit"
+                                                class="btn btn-primary  px-4">
+                                                <i class="fe fe-search me-1"></i> Search
+                                            </button>
+                                            <a href="{{ route('subjects.index') }}"
+                                                class="btn btn-light px-4 btn-reset">
+                                                <i class="fe fe-refresh-cw me-1"></i> Reset
+                                            </a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
 
 
                         <div class="card-body pt-0" id="data-table-container">
@@ -105,7 +154,7 @@
                     <div class="row">
                         <div class="col-12 mb-3">
                             <label class="form-label" for="name">Subject Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="name" class="form-control" placeholder=""
+                            <input type="text" name="name" id="name" class="form-control" placeholder="Subject Name"
                                 data-rules="required">
                         </div>
 
@@ -115,6 +164,7 @@
                                 <option value="">Select Type</option>
                                 <option value="practical">Practical</option>
                                 <option value="theory">Theory</option>
+                                <option value="both">Both</option>
                             </select>
                         </div>
 
@@ -169,7 +219,7 @@
                         </div>
 
                         <div class="col-md-6 mb-3">
-                             <label class="form-label">Status</label>
+                            <label class="form-label">Status</label>
                             <select name="status" id="edit_status" class="form-select">
                                 <option value="1">Active</option>
                                 <option value="0">Inactive</option>

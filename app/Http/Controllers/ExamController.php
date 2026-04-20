@@ -221,21 +221,19 @@ class ExamController extends Controller
     public function togglePublish($id)
     {
         try {
-            // 1. Find the exam and ensure it belongs to the current tenant/organization
             $exam = Exam::where('id', $id)
                 ->where('organization_id', currentOrgId())
                 ->firstOrFail();
 
-            // 2. Toggle the status
             $exam->is_published = !$exam->is_published;
             $exam->save();
 
-            $status = $exam->is_published ? 'published' : 'unpublished';
+            $statusMessage = $exam->is_published ? 'published' : 'moved to in progress';
 
             return response()->json([
                 'status' => true,
-                'message' => "Exam successfully {$status}!",
-                'is_published' => $exam->is_published
+                'message' => "Exam successfully {$statusMessage}!",
+                'new_status' => $exam->is_published ? 1 : 0
             ]);
         } catch (\Exception $e) {
             return response()->json([

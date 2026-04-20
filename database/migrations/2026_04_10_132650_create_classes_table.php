@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('code');
             $table->string('name');
             $table->boolean('status')->default(1);
+            $table->foreignId('timetable_group_id')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->timestamps();
             $table->softDeletes();

@@ -2,22 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TimeSlot;
 use App\Models\TimetableGroup;
 use Illuminate\Http\Request;
 
-class TimeSlotController extends Controller
+class TimetableGroupController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $groups = TimetableGroup::orderBy('name', 'asc')->get();
-
-        $slots = TimeSlot::with('group')->orderBy('id', 'desc')->get();
-
-        return view('pages.time_slots.index', compact('slots', 'groups'));
+        $groups = TimetableGroup::all(); // SaaS mein organization_id scope automatically lagega
+        return view('pages.timetable_groups.index', compact('groups'));
     }
 
     /**
@@ -33,21 +29,15 @@ class TimeSlotController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'timetable_group_id' => 'required|exists:timetable_groups,id',
-            'name'               => 'required|string|max:255',
-            'start_time'         => 'required',
-            'end_time'           => 'required|after:start_time',
+        $request->validate(['name' => 'required|string|max:255']);
+
+        TimetableGroup::create([
+            'organization_id' => auth()->user()->organization_id, // Safely handle this
+            'name' => $request->name,
+            'status' => 1
         ]);
 
-        $data = $request->all();
-        $data['organization_id'] = auth()->user()->organization_id; 
-        TimeSlot::create($data);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Time slot created successfully'
-        ]);
+        return response()->json(['status' => true, 'message' => 'Group created successfully']);
     }
 
     /**

@@ -28,7 +28,6 @@
                                             <th class="text-start">Exam Name & Term</th>
                                             <th>Academic Session</th>
                                             <th>Date Duration</th>
-                                            <th>Subjects Set</th>
                                             <th>Status</th>
                                             <th class="text-center">Actions</th>
                                         </tr>
@@ -54,12 +53,8 @@
                                                     <i class="fe fe-arrow-right me-1"></i> {{ $exam->end_date }}
                                                 </div>
                                             </td>
-                                            <td class="text-center">
-                                                <span class="badge bg-secondary-transparent text-secondary">
-                                                    {{ $exam->schedules_count }} Subjects
-                                                </span>
-                                            </td>
-                                            <td class="text-center">
+                                           
+                                            <td class="text-center status-cell">
                                                 @if($exam->is_published)
                                                 <span class="badge bg-success-transparent text-success">Published</span>
                                                 @else

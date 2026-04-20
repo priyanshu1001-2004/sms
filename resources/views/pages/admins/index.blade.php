@@ -62,10 +62,10 @@
                                             <td>
                                                 <button class="btn btn-sm btn-info-light edit-btn"
                                                     data-id="{{ $admin->id }}" data-name="{{ $admin->name }}"
-                                                    data-email="{{ $admin->email }}" data-phone="{{ $admin->user->phone }}"
+                                                    data-email="{{ $admin->email }}"
+                                                    data-phone="{{ $admin->user->phone }}"
                                                     data-status="{{ $admin->status ? 1 : 0 }}"
-                                                    data-description="{{ $admin->description }}"
-                                                    >
+                                                    data-description="{{ $admin->description }}">
                                                     <i class="fe fe-edit"></i>
                                                 </button>
                                             </td>
@@ -180,9 +180,11 @@
 
             <div class="modal-body">
 
-                <form id="EditForm" method="POST" class="ajax-form">
+                <form id="EditForm" method="POST" class="ajax-form" data-reload="1" data-reset="0">
                     @csrf
                     @method('PUT')
+
+                    <input type="hidden" name="id" id="edit_admin_id">
 
                     <div class="row">
 
@@ -236,20 +238,38 @@
 
 @section('scripts')
 <script>
-    $(document).on('click', '.edit-btn', function () {
+    $(document).on('click', '.edit-btn', function (e) {
+        e.preventDefault();
 
+        // Data fetch from button
         let id = $(this).data('id');
+        let name = $(this).data('name');
+        let email = $(this).data('email');
+        let phone = $(this).data('phone');
+        let status = $(this).data('status');
+        let desc = $(this).data('description');
 
-        $('#EditForm').attr('action', '/admins/' + id);
+        // Form setup
+        let updateUrl = '/admins/' + id;
+        let form = $('#EditForm');
 
-        $('#edit_name').val($(this).data('name'));
-        $('#edit_email').val($(this).data('email'));
-        $('#edit_phone').val($(this).data('phone'));
-        $('#edit_status').val($(this).data('status'));
-        $('#edit_description').val($(this).data('description'));
+        form.attr('action', updateUrl);
+        $('#edit_admin_id').val(id); 
+        
+        // Fields fill
+        $('#edit_name').val(name);
+        $('#edit_email').val(email);
+        $('#edit_phone').val(phone);
 
+        // Status select fix
+        $('#edit_status').val(status).trigger('change');
 
+        $('#edit_description').val(desc);
+
+        // Show Modal
         $('#editModal').modal('show');
     });
+
+    
 </script>
 @endsection

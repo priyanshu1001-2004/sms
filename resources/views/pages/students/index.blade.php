@@ -21,6 +21,73 @@
                             </button>
                         </div>
 
+                        <div class="card mb-4">
+                            
+                            <div class="card-body">
+                                <form id="filterForm" action="{{ route('students.index') }}" method="GET">
+                                    <div class="row g-2">
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Student Info</label>
+                                            <input type="text" name="search" class="form-control form-control"
+                                                placeholder="Name or Adm. No." value="{{ request('search') }}">
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Academic Class</label>
+                                            <select name="class_id" class="form-control form-control select2">
+                                                <option value="">All Classes</option>
+                                                @foreach($classes as $class)
+                                                <option value="{{ $class->id }}" {{ request('class_id')==$class->id ?
+                                                    'selected' : '' }}>
+                                                    {{ $class->name }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Admission Date</label>
+                                            <input type="date" name="adm_date" class="form-control form-control"
+                                                value="{{ request('adm_date') }}">
+                                        </div>
+
+                                        <div class="col-md-1">
+                                            <label class="form-label text-muted small">Gender</label>
+                                            <select name="gender" class="form-control form-control-sm select2">
+                                                <option value="">All</option>
+                                                <option value="Male" {{ request('gender')=='Male' ? 'selected' : '' }}>
+                                                    Male</option>
+                                                <option value="Female" {{ request('gender')=='Female' ? 'selected' : ''
+                                                    }}>Female</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Current Status</label>
+                                            <select name="status" class="form-control form-control-sm select2">
+                                                <option value="">All Status</option>
+                                                <option value="1" {{ request('status')==='1' ? 'selected' : '' }}>Active
+                                                </option>
+                                                <option value="0" {{ request('status')==='0' ? 'selected' : '' }}>
+                                                    Inactive</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <label class="form-label d-block">&nbsp;</label> <button type="submit"
+                                                class="btn btn-primary btn-sm px-3">
+                                                <i class="fe fe-search"></i> Search
+                                            </button>
+                                            <a href="{{ route('students.index') }}"
+                                                class="btn btn-light btn-sm px-3 btn-reset">
+                                                <i class="fe fe-refresh-cw"></i> Reset
+                                            </a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         <div class="card-body pt-0" id="data-table-container">
                             <div class="table-responsive">
                                 <table class="table table-bordered text-nowrap border-bottom saas-table"
@@ -218,7 +285,7 @@
                         <div class="col-12">
                             <h6 class="text-primary border-bottom pb-2">Academic Information</h6>
                         </div>
-                       
+
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Roll Number</label>
                             <input type="text" name="roll_number" class="form-control">

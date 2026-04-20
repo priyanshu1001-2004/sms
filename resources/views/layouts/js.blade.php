@@ -172,55 +172,69 @@
         let form = $(this);
         let submitBtn = form.find('[type="submit"]')[0];
 
-        // Trigger Frontend Validation
-        if (!validateForm(form)) {
-            if (!isValid) {
-                form.find('.is-invalid:first').focus();
-            }
+        // 1. Frontend Validation Check
+        if (typeof validateForm === "function" && !validateForm(form)) {
+            form.find('.is-invalid:first').focus();
             toastr.warning("Please correct the highlighted errors.");
             return;
         }
 
         showBtnLoader(submitBtn);
 
+        let requestType = 'POST';
+        let formData = new FormData(form[0]);
+
         $.ajax({
             url: form.attr('action'),
-            type: form.attr('method') || 'POST',
-            data: new FormData(form[0]),
+            type: requestType,
+            data: formData,
             contentType: false,
             processData: false,
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function (res) {
                 resetBtnLoader(submitBtn);
                 toastr.success(res.message || 'Data saved successfully');
 
-                if (form.data('reset') == 1) form[0].reset();
-
+                // --- Modal Handling ---
                 let modal = form.closest('.modal');
                 if (modal.length) {
-                    bootstrap.Modal.getInstance(modal[0]).hide();
+                    // Modal hide karne se pehle reset
+                    if (form.data('reset') != 0) {
+                        form[0].reset();
+                        form.find('input[type="hidden"]').not('[name="_token"], [name="_method"]').val('');
+                        if ($.isFunction($.fn.select2)) {
+                            form.find('.select2').val(null).trigger('change');
+                        }
+                    }
+                    // Bootstrap modal close
+                    let modalInstance = bootstrap.Modal.getInstance(modal[0]);
+                    if (modalInstance) modalInstance.hide();
+                } else {
+                    // Page form reset logic
+                    if (form.data('reset') != 0) {
+                        form[0].reset();
+                    }
                 }
 
+                // --- Table Auto-Reload ---
                 if (form.data('reload') != 0) {
-                    console.log("Refreshing table container..."); // Debugging
                     $('#data-table-container').load(window.location.href + ' #data-table-container > *', function (response, status, xhr) {
                         if (status == "error") {
-                            console.log("Error reloading table: " + xhr.status + " " + xhr.statusText);
+                            console.log("Error reloading table: " + xhr.status);
                         }
-
+                        // Re-init plugins after content load
                         if (typeof initSelect2 === "function") initSelect2();
-
-                        if (typeof $('[data-bs-toggle="tooltip"]').tooltip === "function") {
-                            $('[data-bs-toggle="tooltip"]').tooltip();
-                        }
+                        if ($.isFunction($.fn.tooltip)) $('[data-bs-toggle="tooltip"]').tooltip();
                     });
                 }
+
+                $(document).trigger('ajaxFormSuccess', [res, form]);
             },
             error: function (xhr) {
                 resetBtnLoader(submitBtn);
-
                 form.find('.is-invalid').removeClass('is-invalid');
                 form.find('.invalid-feedback').remove();
 
@@ -228,24 +242,29 @@
                     let res = xhr.responseJSON;
                     let errors = res.errors;
 
-                    // If there is a top-level message but no field-specific errors, show the message
                     if (!errors && res.message) {
                         toastr.error(res.message);
                         return;
                     }
 
                     $.each(errors, function (key, value) {
-                        let input = form.find(`[name="${key}"], [name="${key}[]"]`);
-                        // ... (keep your existing logic for appending the error message) ...
+                        // Array field names fix (e.g. user.name -> user_name)
+                        let input = form.find(`[name="${key}"], [name="${key}[]"], [id="${key}"]`);
+
                         if (input.length) {
                             input.addClass('is-invalid');
-                            input.after(`<div class="invalid-feedback d-block">${value[0]}</div>`);
+                            // Select2 Error placement fix
+                            if (input.hasClass('select2-hidden-accessible')) {
+                                input.next('.select2-container').after(`<div class="invalid-feedback d-block">${value[0]}</div>`);
+                            } else {
+                                input.after(`<div class="invalid-feedback d-block">${value[0]}</div>`);
+                            }
                         }
                     });
-
-                    // Use the specific message from the server if available
-                    toastr.error(res.message || "Please fix the validation errors.");
+                    toastr.error(res.message || "Please fix validation errors.");
                 } else {
+                    // Detailed console error for debugging
+                    console.error("AJAX Error:", xhr.responseText);
                     toastr.error("Error: " + (xhr.responseJSON?.message || "Server error occurred"));
                 }
             }
@@ -260,6 +279,7 @@
         let checkbox = $(this);
         let url = checkbox.data('url');
         let isChecked = checkbox.is(':checked') ? 1 : 0;
+        let checkboxId = checkbox.attr('id') || '';
 
         // ✅ prevent double click + UI glitch
         checkbox.prop('disabled', true);
@@ -268,10 +288,10 @@
             url: url,
             type: 'POST',
             data: {
-                status: isChecked // Pass the explicit status to the server
+                status: isChecked
             },
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function (res) {
                 toastr.success(res.message || 'Status updated');
@@ -279,18 +299,31 @@
                 // Find the badge in the same row
                 let badge = checkbox.closest('tr').find('.status-cell span');
 
-                // Using the status returned from server to ensure sync
                 if (res.new_status !== undefined) {
-                    let isActive = res.new_status == 1;
-                    badge.attr('class', 'badge ' +
-                        (isActive ? 'bg-success' : 'bg-danger text-white')
-                    ).text(isActive ? 'Active' : 'Inactive');
+                    let statusVal = res.new_status == 1;
+
+                    // 1. Check if this is an Exam Publish toggle
+                    if (checkboxId.includes('publishToggle')) {
+                        if (statusVal) {
+                            badge.attr('class', 'badge bg-success-transparent text-success').text('Published');
+                        } else {
+                            badge.attr('class', 'badge bg-warning-transparent text-warning').text('In Progress');
+                        }
+                    }
+                    // 2. Default logic for Teachers, Students, etc.
+                    else {
+                        if (statusVal) {
+                            badge.attr('class', 'badge bg-success-transparent text-success').text('Active');
+                        } else {
+                            badge.attr('class', 'badge bg-danger-transparent text-danger').text('Inactive');
+                        }
+                    }
                 }
             },
             error: function (xhr) {
                 console.error('ERROR:', xhr.responseText);
                 toastr.error('Failed to update status');
-
+                // Revert checkbox state on error
                 checkbox.prop('checked', !checkbox.prop('checked'));
             },
             complete: function () {
@@ -312,12 +345,17 @@
         e.preventDefault();
 
         let url = $(this).attr('href');
-        $('#filterForm')[0].reset();
+
+        $('#filterForm').find('input, select').val('');
+
+        if ($('.select2').length > 0) {
+            $('.select2').val('').trigger('change');
+        }
 
         window.history.pushState({}, '', url);
 
         $('#data-table-container').load(url + ' #data-table-container > *', function () {
-            toastr.success('Filters cleared');
+            toastr.success('Filters cleared and data reset');
         });
     });
 

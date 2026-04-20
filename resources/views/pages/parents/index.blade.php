@@ -21,6 +21,64 @@
                             </button>
                         </div>
 
+                        <div class="card-body">
+                            <form id="filterForm" action="{{ route('parents.index') }}" method="GET">
+                                <div class="row g-2">
+                                    <div class="col-md-2">
+                                        <label class="form-label text-muted small">Parent Name</label>
+                                        <input type="text" name="search" class="form-control form-control"
+                                            placeholder="Search name..." value="{{ request('search') }}">
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label text-muted small">Contact Info</label>
+                                        <input type="text" name="contact" class="form-control form-control"
+                                            placeholder="Email or Mobile" value="{{ request('contact') }}">
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label text-muted small">Relation</label>
+                                        <select name="relation" class="form-control form-control select2">
+                                            <option value="">All Relations</option>
+                                            <option value="Father" {{ request('relation')=='Father' ? 'selected' : ''
+                                                }}>Father</option>
+                                            <option value="Mother" {{ request('relation')=='Mother' ? 'selected' : ''
+                                                }}>Mother</option>
+                                            <option value="Guardian" {{ request('relation')=='Guardian' ? 'selected'
+                                                : '' }}>Guardian</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label text-muted small">Occupation</label>
+                                        <input type="text" name="occupation" class="form-control form-control"
+                                            placeholder="e.g. Engineer" value="{{ request('occupation') }}">
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <label class="form-label text-muted small">Status</label>
+                                        <select name="status" class="form-control form-control select2">
+                                            <option value="">All</option>
+                                            <option value="1" {{ request('status')==='1' ? 'selected' : '' }}>Active
+                                            </option>
+                                            <option value="0" {{ request('status')==='0' ? 'selected' : '' }}>
+                                                Inactive</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label d-block">&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary px-3">
+                                            <i class="fe fe-search"></i> Search
+                                        </button>
+                                        <a href="{{ route('parents.index') }}" class="btn btn-light  px-3 btn-reset">
+                                            <i class="fe fe-refresh-cw"></i> Reset
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
                         <div class="card-body pt-0" id="data-table-container">
                             <div class="table-responsive">
                                 <table class="table table-bordered text-nowrap border-bottom saas-table"

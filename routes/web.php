@@ -23,6 +23,7 @@ use App\Http\Controllers\{
     SubscriptionController,
     TeacherController,
     TimeSlotController,
+    TimetableGroupController,
     UserController
 };
 
@@ -157,6 +158,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('time_slots', TimeSlotController::class);
     Route::resource('class_timetables', ClassTimetableController::class);
     Route::get('get-teacher-by-subject-class/{subjectId}/{classId}', [ClassTimetableController::class, 'getTeacherBySubject'])->name('get.teacher.by.subject');
+    Route::resource('timetable-groups', TimetableGroupController::class);
 
     // exam 
     Route::get('exams/{exam}/schedule', [ExamController::class, 'manageSchedule'])->name('exams.schedule.manage');

@@ -3,12 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Database\Factories\ClassFactory;
 
 class Classes extends Model
 {
+    use HasFactory;
+
     protected $table = 'classes';
 
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];
+
+    protected static function newFactory()
+    {
+        return ClassFactory::new();
+    }
 
     protected static function booted()
     {
@@ -56,5 +65,10 @@ class Classes extends Model
         return $this->belongsToMany(Subject::class, 'class_subjects', 'class_id', 'subject_id')
             ->withPivot('status', 'organization_id') // Recommended to include these
             ->wherePivot('status', 1);
+    }
+
+    public function timetableGroup()
+    {
+        return $this->belongsTo(TimetableGroup::class, 'timetable_group_id');
     }
 }

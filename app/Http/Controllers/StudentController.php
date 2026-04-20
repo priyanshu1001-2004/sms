@@ -20,11 +20,42 @@ class StudentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $students = Student::paginate(10);
-        $classes  = Classes::all();
+        $query = Student::with(['class', 'parent']);
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(first_name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(last_name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(admission_number) like ?', ["%{$search}%"]);
+            });
+        }
+
+        if ($request->filled('class_id')) {
+            $query->where('class_id', $request->class_id);
+        }
+
+        if ($request->filled('adm_date')) {
+            $query->whereDate('admission_date', $request->adm_date);
+        }
+
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $students = $query->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        $classes = Classes::all();
         $allParents = ParentModal::all();
+
         return view('pages.students.index', compact('students', 'classes', 'allParents'));
     }
 
@@ -74,12 +105,13 @@ class StudentController extends Controller
             $orgId = currentOrgId();
 
             $admissionNumber = CodeGenerator(
-                'users',            
-                'username',         
-                "STU{$year}",        
-                4,                  
-                $orgId              
+                'users',
+                'username',
+                "STU{$year}{$orgId}",
+                4,
+                $orgId
             );
+
             // 3. Handle Photo Upload
             $photoPath = null;
             if ($request->hasFile('student_photo')) {
@@ -403,23 +435,31 @@ class StudentController extends Controller
     {
         $user = auth()->user();
 
-        // 1. Get the Student profile and their Class ID
-        $student = \App\Models\Student::where('user_id', $user->id)->firstOrFail();
-        $classId = $student->class_id;
 
-        // 2. Fetch Master Data
+        $student = \App\Models\Student::with('class.timetableGroup')
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $class = $student->class;
+
+
+        $slots = \App\Models\TimeSlot::where('timetable_group_id', $class->timetable_group_id)
+            ->orderBy('start_time')
+            ->get();
+
+
         $days = \App\Models\WeekDay::orderBy('sort_order')->get();
-        $slots = \App\Models\TimeSlot::orderBy('start_time')->get();
 
-        // 3. Fetch Timetable entries for the student's class
+
         $entries = \App\Models\ClassTimetable::with(['subject', 'teacher'])
-            ->where('class_id', $classId)
+            ->where('class_id', $class->id)
             ->get();
 
         $timetableData = [];
         foreach ($entries as $entry) {
             $timetableData[$entry->week_day_id][$entry->time_slot_id] = $entry;
         }
+
 
         return view('student.timetable', compact('days', 'slots', 'timetableData', 'student'));
     }

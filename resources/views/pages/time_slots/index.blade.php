@@ -25,15 +25,27 @@
                             <h3 class="card-title"><i class="fe fe-plus-circle me-2 text-primary"></i>Create New Slot</h3>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted small">Define periods, lunch breaks, or assembly timings here.</p>
-                            
-                            <form action="{{ route('time_slots.store') }}" method="POST" class="ajax-form" data-reload="1">
+                            <p class="text-muted small">Assign slots to specific groups like Junior or Senior wings.</p>
+
+                            <form action="{{ route('time_slots.store') }}" method="POST" class="ajax-form" data-reload="1" data-reset="1">
                                 @csrf
+                                
+                                {{-- Timetable Group Selection --}}
+                                <div class="form-group mb-3">
+                                    <label class="form-label fw-semibold">Timetable Group <span class="text-danger">*</span></label>
+                                    <select name="timetable_group_id" class="form-control select2" data-rules="required">
+                                        <option value="">-- Select Group --</option>
+                                        @foreach($groups as $group)
+                                            <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
                                 <div class="form-group mb-3">
                                     <label class="form-label fw-semibold">Slot Title <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fe fe-tag"></i></span>
-                                        <input type="text" name="name" class="form-control" placeholder="e.g. Period 1, Recess" required>
+                                        <input type="text" name="name" class="form-control" placeholder="e.g. Period 1, Recess" data-rules="required">
                                     </div>
                                 </div>
 
@@ -41,13 +53,13 @@
                                     <div class="col-6">
                                         <div class="form-group mb-3">
                                             <label class="form-label fw-semibold">Start Time</label>
-                                            <input type="time" name="start_time" class="form-control" required>
+                                            <input type="time" name="start_time" class="form-control" data-rules="required">
                                         </div>
                                     </div>
                                     <div class="col-6">
                                         <div class="form-group mb-3">
                                             <label class="form-label fw-semibold">End Time</label>
-                                            <input type="time" name="end_time" class="form-control" required>
+                                            <input type="time" name="end_time" class="form-control" data-rules="required">
                                         </div>
                                     </div>
                                 </div>
@@ -59,7 +71,7 @@
                                             <span class="custom-control-label fw-semibold text-warning">Mark as Break/Recess</span>
                                         </label>
                                     </div>
-                                    <small class="text-muted mt-1 d-block">Breaks will be grayed out in the timetable grid.</small>
+                                    <small class="text-muted mt-1 d-block">Breaks are locked during timetable entries.</small>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary w-100 shadow-sm">
@@ -84,12 +96,12 @@
                                 <table class="table table-hover border text-nowrap mb-0">
                                     <thead class="bg-light">
                                         <tr>
-                                            <th class="border-bottom-0">#</th>
-                                            <th class="border-bottom-0">Slot Name</th>
-                                            <th class="border-bottom-0">Time Range</th>
-                                            <th class="border-bottom-0">Duration</th>
-                                            <th class="border-bottom-0 text-center">Type</th>
-                                            <th class="border-bottom-0 text-end">Action</th>
+                                            <th>#</th>
+                                            <th>Group</th>
+                                            <th>Slot Name</th>
+                                            <th>Time Range</th>
+                                            <th class="text-center">Type</th>
+                                            <th class="text-end">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -101,32 +113,34 @@
                                         @endphp
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
+                                            <td>
+                                                <span class="text-muted small fw-bold uppercase">
+                                                    {{ $slot->group->name ?? 'N/A' }}
+                                                </span>
+                                            </td>
                                             <td><span class="fw-bold text-dark">{{ $slot->name }}</span></td>
                                             <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fe fe-clock text-muted me-2"></i>
-                                                    <span class="badge bg-light text-dark border">
-                                                        {{ $start->format('h:i A') }} - {{ $end->format('h:i A') }}
-                                                    </span>
+                                                <div class="d-flex flex-column">
+                                                    <span class="text-dark">{{ $start->format('h:i A') }} - {{ $end->format('h:i A') }}</span>
+                                                    <small class="text-muted font-italic">{{ $diff }} mins</small>
                                                 </div>
                                             </td>
-                                            <td><small class="text-muted"><i class="fe fe-trending-up me-1"></i>{{ $diff }} mins</small></td>
                                             <td class="text-center">
                                                 @if($slot->is_break)
-                                                    <span class="badge bg-warning-transparent text-warning px-3 py-2">
-                                                        <i class="fe fe-coffee me-1"></i> Break
-                                                    </span>
+                                                <span class="badge bg-warning-transparent text-warning px-3 py-2">
+                                                    <i class="fe fe-coffee me-1"></i> Break
+                                                </span>
                                                 @else
-                                                    <span class="badge bg-success-transparent text-success px-3 py-2">
-                                                        <i class="fe fe-book-open me-1"></i> Lecture
-                                                    </span>
+                                                <span class="badge bg-success-transparent text-success px-3 py-2">
+                                                    <i class="fe fe-book-open me-1"></i> Lecture
+                                                </span>
                                                 @endif
                                             </td>
                                             <td class="text-end">
                                                 <div class="btn-list">
-                                                    <button class="btn btn-sm btn-danger-light trigger-delete" 
-                                                            data-url="{{ route('time_slots.destroy', $slot->id) }}"
-                                                            data-bs-toggle="tooltip" title="Delete Slot">
+                                                    <button class="btn btn-sm btn-danger-light trigger-delete"
+                                                        data-url="{{ route('time_slots.destroy', $slot->id) }}"
+                                                        data-bs-toggle="tooltip" title="Delete Slot">
                                                         <i class="fe fe-trash-2"></i>
                                                     </button>
                                                 </div>
@@ -137,7 +151,7 @@
                                             <td colspan="6" class="text-center py-5">
                                                 <div class="text-muted">
                                                     <i class="fe fe-info fs-40 d-block mb-2"></i>
-                                                    <p>No time slots defined yet. Start by adding one on the left.</p>
+                                                    <p>No time slots defined yet.</p>
                                                 </div>
                                             </td>
                                         </tr>

@@ -14,9 +14,40 @@ class TeacherController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $teachers = Teacher::paginate(10);
+        $query = Teacher::query();
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(first_name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(last_name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(code) like ?', ["%{$search}%"]);
+            });
+        }
+
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
+        }
+
+        if ($request->filled('joining_date')) {
+            $query->whereDate('date_of_joining', $request->joining_date);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $teachers = $query->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
         return view('pages.teachers.index', compact('teachers'));
     }
 
@@ -63,11 +94,11 @@ class TeacherController extends Controller
             }
 
             $teacherId = CodeGenerator(
-                'users',            
-                'username',         
-                "TCH",              
-                4,                   
-                $orgId               
+                'users',
+                'username',
+                "TCH-{$orgId}-",
+                4,
+                $orgId
             );
 
             // 2. Create User Account
@@ -346,19 +377,26 @@ class TeacherController extends Controller
     public function myTimetable()
     {
         $user = auth()->user();
-
-        // Check if the user actually has a teacher profile
-        // Assuming your User model has a hasOne relationship named 'teacher'
         $teacher = $user->teacher;
 
         if (!$teacher) {
-            return redirect()->back()->with('error', 'Teacher profile not found for this account.');
+            return redirect()->back()->with('error', 'Teacher profile not found.');
         }
 
         $days = \App\Models\WeekDay::orderBy('sort_order')->get();
-        $slots = \App\Models\TimeSlot::orderBy('start_time')->get();
 
-        // Now it is safe to use $teacher->id
+        $slots = \App\Models\TimeSlot::whereIn('timetable_group_id', function ($query) use ($teacher) {
+            $query->select('timetable_group_id')
+                ->from('classes')
+                ->whereIn('id', function ($q) use ($teacher) {
+                    $q->select('class_id')
+                        ->from('class_timetables')
+                        ->where('teacher_id', $teacher->id);
+                });
+        })->orderBy('start_time')->get()->unique(function ($item) {
+            return $item->start_time . $item->end_time;
+        });
+
         $entries = \App\Models\ClassTimetable::with(['subject', 'class'])
             ->where('teacher_id', $teacher->id)
             ->get();

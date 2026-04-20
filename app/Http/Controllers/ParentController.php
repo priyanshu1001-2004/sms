@@ -18,9 +18,51 @@ class ParentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $parents = ParentModal::with('user', 'creator')->paginate(10);
+        // 1. Initialize Query with Eager Loading to prevent N+1 performance issues
+        $query = ParentModal::with(['user', 'creator']);
+
+        // 2. Search by Name (Case-Insensitive)
+        if ($request->filled('search')) {
+            $search = strtolower($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(first_name) like ?', ["%{$search}%"])
+                    ->orWhereRaw('LOWER(last_name) like ?', ["%{$search}%"]);
+            });
+        }
+
+        // 3. Search by Contact (Email or Mobile)
+        if ($request->filled('contact')) {
+            $contact = strtolower($request->contact);
+            $query->where(function ($q) use ($contact) {
+                $q->whereRaw('LOWER(email) like ?', ["%{$contact}%"])
+                    ->orWhere('mobile_number', 'like', "%{$contact}%");
+            });
+        }
+
+        // 4. Filter by Relation (Father, Mother, Guardian)
+        if ($request->filled('relation')) {
+            $query->where('relation', $request->relation);
+        }
+
+        // 5. Filter by Occupation (Case-Insensitive)
+        if ($request->filled('occupation')) {
+            $occ = strtolower($request->occupation);
+            $query->whereRaw('LOWER(occupation) like ?', ["%{$occ}%"]);
+        }
+
+        // 6. Filter by Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // 7. Execute Pagination & keep search parameters in links
+        $parents = $query->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        // 8. Return to view
         return view('pages.parents.index', compact('parents'));
     }
 
@@ -309,19 +351,18 @@ class ParentController extends Controller
 
     public function getStudentTimetable($studentId)
     {
-        // Find student and class
-        $student = \App\Models\Student::findOrFail($studentId);
+        $student = \App\Models\Student::with('class')->findOrFail($studentId);
 
-        // Fetch Master Data
         $days = \App\Models\WeekDay::orderBy('sort_order')->get();
-        $slots = \App\Models\TimeSlot::orderBy('start_time')->get();
 
-        // Fetch Timetable with relationships
+        $slots = \App\Models\TimeSlot::where('timetable_group_id', $student->class->timetable_group_id)
+            ->orderBy('start_time')
+            ->get();
+
         $entries = \App\Models\ClassTimetable::with(['subject', 'teacher'])
             ->where('class_id', $student->class_id)
             ->get();
 
-        // Grouping the data for easy JS access
         $timetableData = [];
         foreach ($entries as $entry) {
             $timetableData[$entry->week_day_id][$entry->time_slot_id] = [
@@ -331,7 +372,6 @@ class ParentController extends Controller
             ];
         }
 
-        // Return JSON so the variable $slots doesn't conflict with the main page view
         return response()->json([
             'status' => true,
             'days'   => $days,
