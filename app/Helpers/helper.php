@@ -19,11 +19,21 @@ if (!function_exists('CodeGenerator')) {
                 $query->where('organization_id', $organizationId);
             }
 
-            $lastCode = $query->orderByDesc($column)->lockForUpdate()->value($column);
+            $lastCode = $query->orderByRaw("LENGTH($column) DESC")
+                ->orderByDesc($column)
+                ->lockForUpdate()
+                ->value($column);
 
             if ($lastCode) {
-                preg_match('/(\d+)$/', $lastCode, $matches);
-                $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+                $numericPart = substr($lastCode, strlen($prefix));
+
+                if (strlen($numericPart) > $pad) {
+                    preg_match('/(\d+)$/', $lastCode, $matches);
+                    $lastNumber = isset($matches[1]) ? (int)substr($matches[1], -$pad) : 0;
+                } else {
+                    $lastNumber = (is_numeric($numericPart)) ? (int)$numericPart : 0;
+                }
+
                 $nextNumber = $lastNumber + 1;
             } else {
                 $nextNumber = 1;
@@ -33,7 +43,6 @@ if (!function_exists('CodeGenerator')) {
         });
     }
 }
-
 /*
 |--------------------------------------------------------------------------
 | Org Based Unique Phone Validation

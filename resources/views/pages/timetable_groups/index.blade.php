@@ -1,6 +1,6 @@
 @extends('layouts.master')
 
-@section('title', 'Timetable Groups')
+@section('title', 'Schedule Profiles')
 
 @section('content')
 <div class="main-content app-content mt-0">
@@ -9,48 +9,45 @@
 
             {{-- PAGE HEADER --}}
             <div class="page-header">
-                <h1 class="page-title">Timetable Groups</h1>
+                <h1 class="page-title">Schedule Profiles</h1>
                 <div>
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="javascript:void(0)">Academic</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Groups</li>
+                        <li class="breadcrumb-item"><a href="javascript:void(0)">Academic Settings</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Schedule Profiles</li>
                     </ol>
                 </div>
             </div>
 
             <div class="row">
-                {{-- LEFT: ADD FORM --}}
+                {{-- LEFT: CONFIGURATION FORM --}}
                 <div class="col-md-4">
-                    <div class="card custom-card">
+                    <div class="card custom-card shadow-sm border-0">
                         <div class="card-header border-bottom">
-                            <h3 class="card-title">Create Schedule Group</h3>
+                            <h3 class="card-title">Define New Profile</h3>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted small">Create groups like 'Junior Wing', 'Senior Wing' to manage different timings.</p>
-                            
                             <form action="{{ route('timetable-groups.store') }}" method="POST" class="ajax-form" data-reload="1" data-reset="1">
                                 @csrf
                                 <div class="form-group mb-4">
-                                    <label class="form-label fw-semibold">Group Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="name" class="form-control" placeholder="e.g. Junior Section" required>
-                                    <div class="invalid-feedback"></div>
+                                    <label class="form-label fw-semibold">Profile Designation</label>
+                                    <input type="text" name="name" class="form-control" placeholder="e.g. Junior Wing" required>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary w-100 shadow-sm">
-                                    <i class="fe fe-plus-circle me-1"></i> Save Group
+                                    <i class="fe fe-save me-2"></i> Register Profile
                                 </button>
                             </form>
                         </div>
                     </div>
                 </div>
 
-                {{-- RIGHT: LIST TABLE --}}
+                {{-- RIGHT: MANAGEMENT TABLE --}}
                 <div class="col-md-8">
-                    <div class="card custom-card">
-                        <div class="card-header border-bottom d-flex justify-content-between">
-                            <h3 class="card-title">Existing Groups</h3>
-                            <span class="badge bg-primary-transparent text-primary rounded-pill">
-                                {{ count($groups) }} Total
+                    <div class="card custom-card shadow-sm border-0">
+                        <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                            <h3 class="card-title">Active Schedule Profiles</h3>
+                            <span class="badge bg-primary-transparent text-primary rounded-pill px-3">
+                                {{ count($groups) }} Profiles
                             </span>
                         </div>
                         <div class="card-body">
@@ -59,8 +56,7 @@
                                     <thead class="bg-light">
                                         <tr>
                                             <th>#</th>
-                                            <th>Group Name</th>
-                                            <th>Slots Count</th>
+                                            <th>Profile Designation</th>
                                             <th>Status</th>
                                             <th class="text-end">Action</th>
                                         </tr>
@@ -71,34 +67,30 @@
                                             <td>{{ $loop->iteration }}</td>
                                             <td><span class="fw-bold text-dark">{{ $group->name }}</span></td>
                                             <td>
-                                                <span class="badge bg-info-transparent text-info">
-                                                    {{ $group->time_slots_count ?? 0 }} Slots
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-{{ $group->status ? 'success' : 'danger' }}-transparent">
-                                                    {{ $group->status ? 'Active' : 'Inactive' }}
+                                                @php $statusKey = $group->status ? 'active' : 'inactive'; @endphp
+                                                <span class="badge bg-{{ $group->status ? 'success' : 'danger' }}-transparent text-{{ $group->status ? 'success' : 'danger' }}">
+                                                    {{ ucfirst($statusKey) }}
                                                 </span>
                                             </td>
                                             <td class="text-end">
                                                 <div class="btn-list">
+                                                    <button class="btn btn-sm btn-info-light edit-profile-btn" 
+                                                        data-id="{{ $group->id }}"
+                                                        data-name="{{ $group->name }}"
+                                                        data-status="{{ $statusKey }}" 
+                                                        data-bs-toggle="tooltip" title="Modify Configuration">
+                                                        <i class="fe fe-edit"></i>
+                                                    </button>
+
                                                     <button class="btn btn-sm btn-danger-light trigger-delete" 
-                                                        data-url="{{ route('timetable-groups.destroy', $group->id) }}"
-                                                        data-bs-toggle="tooltip" title="Delete Group">
+                                                        data-url="{{ route('timetable-groups.destroy', $group->id) }}">
                                                         <i class="fe fe-trash-2"></i>
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
                                         @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center py-5">
-                                                <div class="text-muted">
-                                                    <i class="fe fe-alert-circle fs-40 d-block mb-2"></i>
-                                                    <p>No timetable groups found.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                        <tr><td colspan="4" class="text-center py-4 text-muted">No profiles found.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>
@@ -107,8 +99,65 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
+
+{{-- EDIT MODAL --}}
+<div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-gray text-white">
+                <h5 class="modal-title">Modify Schedule Profile</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">x</button>
+            </div>
+            <form id="editProfileForm" method="POST" class="ajax-form" data-reload="1">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="form-group mb-4">
+                        <label class="form-label fw-semibold">Profile Designation</label>
+                        <input type="text" name="name" id="edit_profile_name" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label fw-semibold">Operational Status</label>
+                        <select name="status" id="edit_profile_status" class="form-control select2-no-search">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-gray" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary px-5">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $(document).on('click', '.edit-profile-btn', function() {
+            const id = $(this).data('id');
+            const name = $(this).data('name');
+            const status = $(this).data('status'); // Will be "active" or "inactive"
+
+            // Update URL
+            let updateUrl = "{{ route('timetable-groups.update', ':id') }}";
+            $('#editProfileForm').attr('action', updateUrl.replace(':id', id));
+            
+            // Fill Inputs
+            $('#edit_profile_name').val(name);
+            
+            // SET STATUS
+            // Using strings "active"/"inactive" ensures the selection works perfectly
+            $('#edit_profile_status').val(status).trigger('change');
+
+            $('#editProfileModal').modal('show');
+        });
+    });
+</script>
 @endsection

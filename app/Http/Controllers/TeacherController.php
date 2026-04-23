@@ -96,7 +96,7 @@ class TeacherController extends Controller
             $teacherId = CodeGenerator(
                 'users',
                 'username',
-                "TCH-{$orgId}-",
+                "TCH{$orgId}",
                 4,
                 $orgId
             );

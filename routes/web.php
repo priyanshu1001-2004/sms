@@ -4,16 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AcademicYearController,
     AdminController,
-    BoardController,
-    BranchController,
     ClassesController,
     ClassSubjectController,
     ClassTeacherController,
     ClassTimetableController,
     DashboardController,
-    ExamController,
-    ExamResultController,
-    GradeController,
     OrganizationController,
     ParentController,
     ProfileController,
@@ -86,8 +81,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('students/{id}/update-password', [StudentController::class, 'updatePassword'])->name('students.updatePassword');
     Route::get('my-subjects', [StudentController::class, 'mySubjects'])->name('student.subjects');
     Route::get('student/my-timetable', [StudentController::class, 'myTimetable'])->name('student.timetable');
-    Route::get('my-results', [StudentController::class, 'myResults'])->name('student.results');
-    Route::get('student/exam-timetable', [StudentController::class, 'myExamTimetable'])->name('student.exam.timetable');
+
+
 
 
     Route::resource('parents', ParentController::class);
@@ -96,7 +91,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('my-children', [ParentController::class, 'parent_students'])->name('parents.students');
     Route::get('parents/student-subjects/{student_id}', [ParentController::class, 'getStudentSubjects']);
     Route::get('parents/student-timetable/{studentId}', [ParentController::class, 'getStudentTimetable'])->name('student_timetable');
-    Route::get('children-results', [ParentController::class, 'childrenResults'])->name('parent.results');
 
 
     Route::get('parents/{id}/students', [ParentController::class, 'getStudents'])
@@ -129,8 +123,7 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::resource('subscriptions', SubscriptionController::class);
     Route::resource('academic-years', AcademicYearController::class);
-    Route::resource('branches', BranchController::class);
-    Route::resource('boards', BoardController::class);
+
     Route::resource('classes', ClassesController::class);
 
     Route::resource('subjects', SubjectController::class);
@@ -161,19 +154,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('timetable-groups', TimetableGroupController::class);
 
     // exam 
-    Route::get('exams/{exam}/schedule', [ExamController::class, 'manageSchedule'])->name('exams.schedule.manage');
-    Route::post('exams/schedule/store', [ExamController::class, 'storeSchedule'])->name('exams.schedule.store');
-    Route::post('exams/toggle-publish/{id}', [ExamController::class, 'togglePublish'])->name('exams.toggle-publish');
 
-    Route::resource('exams', ExamController::class);
-    Route::resource('grades', GradeController::class);
-
-    Route::get('exam-results/create', [ExamResultController::class, 'create'])->name('exam-results.create');
-    Route::get('exam-results/student', [ExamResultController::class, 'studentWise'])->name('exam-results.student-wise');
-    Route::post('exam-results/store-bulk', [ExamResultController::class, 'storeBulk'])->name('exam-results.store-bulk');
-    Route::get('get-students-by-class/{class_id}', [ExamResultController::class, 'getStudentsByClass']);
-    Route::resource('exam-results', ExamResultController::class);
-
+    
 
 
     /*

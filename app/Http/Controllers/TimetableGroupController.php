@@ -12,7 +12,7 @@ class TimetableGroupController extends Controller
      */
     public function index()
     {
-        $groups = TimetableGroup::all(); // SaaS mein organization_id scope automatically lagega
+        $groups = TimetableGroup::orderBy('id', 'desc')->get();
         return view('pages.timetable_groups.index', compact('groups'));
     }
 
@@ -61,7 +61,25 @@ class TimetableGroupController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'name'   => 'required|string|max:255',
+            'status' => 'required|in:active,inactive'
+        ]);
+
+        $group = TimetableGroup::where('organization_id', auth()->user()->organization_id)
+            ->findOrFail($id);
+
+        $statusValue = ($request->status == 'active') ? 1 : 0;
+
+        $group->update([
+            'name'   => $request->name,
+            'status' => $statusValue
+        ]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Schedule Profile updated successfully'
+        ]);
     }
 
     /**

@@ -31,7 +31,6 @@
                                             <th>Subject Name</th>
                                             <th>Status</th>
                                             <th>Created By</th>
-                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -49,36 +48,7 @@
                                             </td>
                                             
                                             <td>{{ $assign->creator->name ?? 'System' }}</td>
-                                            <td>
-                                                <div class="d-flex">
-                                                    <button type="button"
-                                                        class="btn btn-sm btn-info-light edit-assign-btn"
-                                                        data-class-id="{{ $assign->class_id }}"
-                                                        title="Manage Class Subjects">
-                                                        <i class="fe fe-edit"></i>
-                                                    </button>
-
-                                                    <button type="button"
-                                                        class="btn btn-sm btn-danger-light trigger-delete ms-2"
-                                                        data-url="{{ route('class_subjects.destroy', $assign->id) }}"
-                                                        data-title="Unassign Subject"
-                                                        data-message="Remove this subject from the class?">
-                                                        <i class="fe fe-trash-2"></i>
-                                                    </button>
-
-                                                    <div class="switch-toggle d-flex align-items-center mx-2">
-                                                        <p class="onoffswitch2 mb-0">
-                                                            <input type="checkbox" id="status{{ $assign->id }}"
-                                                                class="onoffswitch2-checkbox globalStatusToggle" {{--
-                                                                Matches your JS selector --}}
-                                                                data-url="{{ route('class_subjects.toggleStatus', $assign->id) }}"
-                                                                {{ $assign->status ? 'checked' : '' }}>
-                                                            <label class="onoffswitch2-label"
-                                                                for="status{{ $assign->id }}"></label>
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </td>
+                                           
                                         </tr>
                                         @empty
                                         <tr>

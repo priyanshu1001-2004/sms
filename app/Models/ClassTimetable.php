@@ -15,6 +15,11 @@ class ClassTimetable extends Model
         return $this->belongsTo(Classes::class, 'class_id');
     }
 
+    public function weekDay()
+    {
+        return $this->belongsTo(WeekDay::class, 'week_day_id');
+    }
+
     public function subject()
     {
         return $this->belongsTo(Subject::class, 'subject_id');

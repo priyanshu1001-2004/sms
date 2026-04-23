@@ -201,7 +201,7 @@
                 // --- Modal Handling ---
                 let modal = form.closest('.modal');
                 if (modal.length) {
-                    // Modal hide karne se pehle reset
+                    // Modal logic
                     if (form.data('reset') != 0) {
                         form[0].reset();
                         form.find('input[type="hidden"]').not('[name="_token"], [name="_method"]').val('');
@@ -209,17 +209,20 @@
                             form.find('.select2').val(null).trigger('change');
                         }
                     }
-                    // Bootstrap modal close
                     let modalInstance = bootstrap.Modal.getInstance(modal[0]);
                     if (modalInstance) modalInstance.hide();
                 } else {
-                    // Page form reset logic
                     if (form.data('reset') != 0) {
-                        form[0].reset();
+                        form[0].reset(); // Clears text inputs
+
+                        if ($.isFunction($.fn.select2)) {
+                            form.find('.select2').val(null).trigger('change');
+                        }
+
+                        form.find('input[type="hidden"]').not('[name="_token"], [name="_method"]').val('');
                     }
                 }
 
-                // --- Table Auto-Reload ---
                 if (form.data('reload') != 0) {
                     $('#data-table-container').load(window.location.href + ' #data-table-container > *', function (response, status, xhr) {
                         if (status == "error") {
@@ -272,7 +275,23 @@
     });
 
     //global clear button 
-    $('#clearaddBtn').click(() => $('#CreateForm')[0].reset());
+    $(document).on('click', '#clearaddBtn', function () {
+        let form = $(this).closest('form');
+
+        // 1. Reset standard inputs
+        form[0].reset();
+
+        // 2. Clear Select2 Dropdowns (Visual Reset)
+        if ($.isFunction($.fn.select2)) {
+            form.find('.select2').val(null).trigger('change');
+        }
+
+        // 3. Remove Validation Errors (Red borders & messages)
+        form.find('.is-invalid').removeClass('is-invalid');
+        form.find('.invalid-feedback').remove();
+
+        toastr.info("Form cleared");
+    });
 
     //global toggle button 
     $(document).off('change', '.globalStatusToggle').on('change', '.globalStatusToggle', function () {

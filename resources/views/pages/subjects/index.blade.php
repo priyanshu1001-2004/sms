@@ -253,17 +253,14 @@
             let status = btn.data('status');
             let type = btn.data('type');
 
-            // Fill fields
             $('#edit_id').val(id);
             $('#edit_name').val(name);
             $('#edit_type').val(type);
 
             $('#edit_status').val(status).trigger('change');
 
-            // Update action URL
             $('#editModal form').attr('action', `/subjects/${id}`);
 
-            // Show modal
             $('#editModal').modal('show');
         });
     });

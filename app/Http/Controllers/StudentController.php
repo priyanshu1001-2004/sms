@@ -84,13 +84,20 @@ class StudentController extends Controller
             'password'       => 'required|min:6',
             'student_photo'  => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'mobile_number'  => 'nullable|string|max:15',
+            'religion'       => 'nullable|string|max:100',
+            'caste'          => 'nullable|string|max:100',
+            'blood_group'    => 'nullable|string|max:10',
         ]);
 
         DB::beginTransaction();
+        $photoPath = null; 
+
         try {
             $orgId = currentOrgId();
+            $year = date('Y');
 
-            // 1. Roll Number Check (Class-wise uniqueness in the same Org)
+            $prefix = "STU" . $year . $orgId;
+
             $rollExists = Student::where('organization_id', $orgId)
                 ->where('class_id', $request->class_id)
                 ->where('roll_number', $request->roll_number)
@@ -100,27 +107,20 @@ class StudentController extends Controller
                 return response()->json(['status' => false, 'message' => 'This Roll Number is already assigned in this class.'], 422);
             }
 
-            // 2. Generate Admission Number FIRST
-            $year = date('Y');
-            $orgId = currentOrgId();
-
             $admissionNumber = CodeGenerator(
                 'users',
                 'username',
-                "STU{$year}{$orgId}",
+                $prefix,
                 4,
                 $orgId
             );
 
-            // 3. Handle Photo Upload
-            $photoPath = null;
             if ($request->hasFile('student_photo')) {
                 $file = $request->file('student_photo');
                 $fileName = time() . '_' . $admissionNumber . '.' . $file->getClientOriginalExtension();
                 $photoPath = $file->storeAs('uploads/students', $fileName, 'public');
             }
 
-            // 4. Create User (The Identity)
             $user = User::create([
                 'name'            => trim($request->first_name . ' ' . $request->last_name),
                 'email'           => $request->email,
@@ -128,12 +128,11 @@ class StudentController extends Controller
                 'password'        => Hash::make($request->password),
                 'organization_id' => $orgId,
                 'user_type'       => 'student',
-                'username'        => $admissionNumber // Use Generated Code for Login
+                'username'        => $admissionNumber
             ]);
 
             $user->assignRole('student');
 
-            // 5. Create Student Profile (The Meta Data)
             $student = Student::create([
                 'user_id'          => $user->id,
                 'organization_id'  => $orgId,
@@ -155,7 +154,7 @@ class StudentController extends Controller
                 'created_by'       => auth()->id(),
             ]);
 
-            // Audit Log for extra security
+            // 7. Audit Log
             auditLog(
                 module: 'Students',
                 action: 'Admission',
@@ -166,14 +165,24 @@ class StudentController extends Controller
             );
 
             DB::commit();
-            return response()->json(['status' => true, 'message' => "Student admitted successfully! ID: $admissionNumber"]);
+            return response()->json([
+                'status' => true,
+                'message' => "Student admitted successfully! ID: $admissionNumber"
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            if ($photoPath) Storage::disk('public')->delete($photoPath);
-            return response()->json(['status' => false, 'message' => 'Admission failed: ' . $e->getMessage()], 500);
+
+            // 8. FILE CLEANUP: Delete photo if DB transaction fails
+            if ($photoPath && Storage::disk('public')->exists($photoPath)) {
+                Storage::disk('public')->delete($photoPath);
+            }
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Admission failed: ' . $e->getMessage()
+            ], 500);
         }
     }
-
     /**
      * Display the specified resource.
      */
@@ -464,35 +473,7 @@ class StudentController extends Controller
         return view('student.timetable', compact('days', 'slots', 'timetableData', 'student'));
     }
 
-    public function myResults(Request $request)
-    {
-        // 1. Get the logged-in student's record
-        $student = Auth::user()->student; // Assumes User hasOne Student relationship
 
-        if (!$student) {
-            return redirect()->back()->with('error', 'Student record not found.');
-        }
-
-        // 2. Fetch all exams the student has participated in
-        $exams = Exam::whereHas('results', function ($q) use ($student) {
-            $q->where('student_id', $student->id);
-        })->orderBy('start_date', 'desc')->get();
-
-        $selectedExam = null;
-        $results = [];
-
-        // 3. If an exam is selected, fetch detailed marks
-        if ($request->filled('exam_id')) {
-            $selectedExam = Exam::findOrFail($request->exam_id);
-
-            $results = ExamResult::where('student_id', $student->id)
-                ->where('exam_id', $request->exam_id)
-                ->with('subject')
-                ->get();
-        }
-
-        return view('student.my_results', compact('student', 'exams', 'selectedExam', 'results'));
-    }
 
     public function myExamTimetable()
     {

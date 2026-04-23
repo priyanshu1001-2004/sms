@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('week_days', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); 
+            $table->string('name')->unique();
+            $table->integer('fullcalendar_day')->unique(); // 1,2,3
             $table->integer('sort_order')->unique(); 
             $table->timestamps();
         });

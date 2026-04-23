@@ -380,43 +380,5 @@ class ParentController extends Controller
         ]);
     }
 
-    public function childrenResults(Request $request)
-    {
-        $user = auth()->user();
-
-        $parent = \App\Models\ParentModal::where('user_id', $user->id)->first();
-
-        if (!$parent) {
-            return redirect()->route('dashboard')->with('error', 'Parent profile not found.');
-        }
-
-        $children = Student::where('parent_id', $parent->id)->with('class')->get();
-
-        if ($children->isEmpty()) {
-            return redirect()->route('dashboard')->with('error', 'No children linked to this parent profile.');
-        }
-
-        $selectedStudent = null;
-        $exams = [];
-        $results = [];
-
-        if ($request->filled('student_id')) {
-            $selectedStudent = $children->where('id', $request->student_id)->first();
-
-            if ($selectedStudent) {
-                $exams = Exam::whereHas('results', function ($q) use ($selectedStudent) {
-                    $q->where('student_id', $selectedStudent->id);
-                })->get();
-
-                if ($request->filled('exam_id')) {
-                    $results = ExamResult::where('student_id', $selectedStudent->id)
-                        ->where('exam_id', $request->exam_id)
-                        ->with('subject')
-                        ->get();
-                }
-            }
-        }
-
-        return view('parent.results', compact('children', 'selectedStudent', 'exams', 'results'));
-    }
+   
 }
