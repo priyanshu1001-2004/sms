@@ -45,7 +45,7 @@ class AdminController extends Controller
                 'required',
                 'email',
                 Rule::unique('admins', 'email')->where('organization_id', $ordId),
-                Rule::unique('users', 'email'), 
+                Rule::unique('users', 'email'),
             ],
             'phone' => [
                 'required',
@@ -59,7 +59,7 @@ class AdminController extends Controller
         DB::beginTransaction();
 
         try {
-           
+
             $hashedPassword = Hash::make($validated['password']);
 
             $user = User::create([
@@ -67,8 +67,9 @@ class AdminController extends Controller
                 'email'           => $validated['email'],
                 'phone'           => $validated['phone'],
                 'password'        => $hashedPassword,
+                'username'        => $validated['email'],
                 'organization_id' => $ordId,
-                'user_type'       => 'admin', 
+                'user_type'       => 'admin',
             ]);
 
             $user->assignRole('admin');

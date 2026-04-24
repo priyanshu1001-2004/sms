@@ -16,13 +16,14 @@ return new class extends Migration
             $table->foreignId('organization_id')->constrained()->onDelete('cascade');
             $table->foreignId('class_id')->constrained()->onDelete('cascade');
             $table->foreignId('subject_id')->constrained()->onDelete('cascade');
-            $table->foreignId('teacher_id')->constrained()->onDelete('cascade');
+            $table->foreignId('teacher_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('week_day_id')->constrained()->onDelete('cascade');
             $table->foreignId('time_slot_id')->constrained()->onDelete('cascade');
             $table->string('room_number')->nullable();
             $table->timestamps();
 
             $table->unique(['organization_id', 'teacher_id', 'week_day_id', 'time_slot_id'], 'teacher_timing_unique');
+            $table->unique(['organization_id', 'class_id', 'week_day_id', 'time_slot_id'], 'class_timing_unique');
         });
     }
 

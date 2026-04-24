@@ -17,6 +17,7 @@ use App\Http\Controllers\{
     SubjectTeacherController,
     SubscriptionController,
     TeacherController,
+    TeacherSubjectController,
     TimeSlotController,
     TimetableGroupController,
     UserController
@@ -145,6 +146,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('teacher/my-students', [TeacherController::class, 'myStudents'])->name('teacher.students');
     Route::get('teacher/my-timetable', [TeacherController::class, 'myTimetable'])->name('teacher.timetable');
     Route::get('teacher/exam-timetable', [TeacherController::class, 'exam_timetable'])->name('teacher.exam.timetable');
+    Route::get('get-class-subjects-for-teacher', [TeacherSubjectController::class, 'getClassSubjectsForTeacher'])->name('get-class-subjects-for-teacher');
+    Route::get('get-qualified-teachers', [TeacherSubjectController::class, 'getQualifiedTeachers'])
+        ->name('get-qualified-teachers');
+    Route::resource('teacher-subjects', TeacherSubjectController::class);
 
 
     // time table
@@ -155,7 +160,7 @@ Route::middleware(['auth'])->group(function () {
 
     // exam 
 
-    
+
 
 
     /*

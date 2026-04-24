@@ -247,7 +247,7 @@
 
                     <div class="form-group mb-3">
                         <label class="form-label fw-bold">Select Parent <span class="text-danger">*</span></label>
-                        <select name="parent_id" id="parent_select" class="form-control select2-modal"
+                        <select name="parent_id" id="parent_select" class="form-control select2-modal  "
                             data-rules="required">
                             <option value="">-- Search/Select Parent --</option>
                             @foreach($allParents as $parent)

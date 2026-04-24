@@ -92,23 +92,22 @@
                         <i class="angle fe fe-chevron-right"></i>
                     </a>
                     <ul class="slide-menu">
-                        {{-- Step 1: Basic Setup (Masters) --}}
+                        {{-- Step 1: Masters / Configuration --}}
+                        <li class="side-menu-label1"><a href="javascript:void(0)">Academic Setup</a></li>
                         <li><a href="{{ route('academic-years.index') }}" class="slide-item">Academic Years</a></li>
-                        <li><a href="{{ route('timetable-groups.index') }}" class="slide-item">Schedule Profiles</a></li>
                         <li><a href="{{ route('classes.index') }}" class="slide-item">Classes & Sections</a></li>
-                        <li><a href="{{ route('subjects.index') }}" class="slide-item">Subjects Master</a></li>
+                        <li><a href="{{ route('subjects.index') }}" class="slide-item">Subject List</a></li>
 
-                        {{-- Step 2: Resource Allocation (Mapping) --}}
+                        {{-- Step 2: Mapping / Resource Linking --}}
+                        <li class="side-menu-label1"><a href="javascript:void(0)">Assign Resources</a></li>
+                        <li><a href="{{ route('class_subjects.index') }}" class="slide-item">Class Subjects</a></li>
+                        <li><a href="{{ route('teacher-subjects.index') }}" class="slide-item">Teacher Mapping</a></li>
+                        <li><a href="{{ route('class_teachers.index') }}" class="slide-item">Class In-Charge</a></li>
 
-                        <li><a href="{{ route('class_subjects.index') }}" class="slide-item">Assign Class Subjects</a>
-                        </li>
-                        <li><a href="{{ route('subject_teachers.index') }}" class="slide-item">Assign Subject
-                                Teachers</a></li>
-                        <li><a href="{{ route('class_teachers.index') }}" class="slide-item">Assign Class Teachers</a>
-                        </li>
-
-                        {{-- Step 3: Timetable Configuration --}}
-                        <li><a href="{{ route('time_slots.index') }}" class="slide-item">Time Slots Master</a></li>
+                        {{-- Step 3: Timetable Management --}}
+                        <li class="side-menu-label1"><a href="javascript:void(0)">Scheduling</a></li>
+                        <li><a href="{{ route('timetable-groups.index') }}" class="slide-item">Schedule Profiles</a></li>
+                        <li><a href="{{ route('time_slots.index') }}" class="slide-item">Time Slots</a></li>
                         <li><a href="{{ route('class_timetables.index') }}" class="slide-item">Manage Timetable</a></li>
                     </ul>
                 </li>

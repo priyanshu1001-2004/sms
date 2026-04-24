@@ -31,4 +31,6 @@ class TimeSlot extends Model
     {
         return $this->belongsTo(TimetableGroup::class, 'timetable_group_id');
     }
+
+   
 }

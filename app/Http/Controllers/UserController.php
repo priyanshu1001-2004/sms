@@ -16,80 +16,77 @@ class UserController extends Controller
         $request->validate([
             'login_id' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'role'     => ['required', 'string'],
         ]);
 
-        $field = match ($request->role) {
-            'parent', 'super_admin'  => 'phone',
-            'student', 'teacher'     => 'username',
-            'admin', 'master_admin'  => 'email',
-            default                  => 'email',
-        };
+        $loginValue = trim($request->login_id);
+        $field = 'username'; 
+
+        if (filter_var($loginValue, FILTER_VALIDATE_EMAIL)) {
+            $field = 'email'; // Admin
+        } elseif (is_numeric($loginValue) && strlen($loginValue) >= 10) {
+            $field = 'phone'; // Parent
+        }
 
         $credentials = [
-            $field     => $request->login_id,
+            $field     => $loginValue,
             'password' => $request->password,
         ];
 
-        // dd($request->all(), $field, $credentials);
-
+        // 2. Attempt Login
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $user = Auth::user();
 
-            // dd($user);
-
-            $allowed = false;
-
-            if ($request->role === 'admin') {
-                if ($user->hasAnyRole(['admin', 'master_admin'])) {
-                    $allowed = true;
-                }
-            } else {
-                if ($user->hasRole($request->role)) {
-                    $allowed = true;
-                }
-            }
-
-            if (!$allowed) {
-                Auth::logout();
-                return back()->withErrors(['login_id' => 'Unauthorized access for the selected role.']);
-            }
-
+            // Get the primary role
             $role = $user->getRoleNames()->first();
-           
+
+            // Use a variable to store the route so we can return JSON at the end
+            $redirectRoute = route('dashboard');
 
             switch ($role) {
                 case 'super_admin':
-                    // dd('test');
                     session(['impersonator_id' => $user->id]);
-                    return redirect()->route('dashboard');
+                    $redirectRoute = route('dashboard');
+                    break;
 
                 case 'master_admin':
-                    return redirect()->route('dashboard');
+                    $redirectRoute = route('dashboard');
+                    break;
 
                 case 'admin':
-                    return redirect()->route('dashboard');
+                    $redirectRoute = route('dashboard');
+                    break;
 
                 case 'teacher':
-                    return redirect()->route('dashboard');
-
-                case 'parent':
-                    return redirect()->route('dashboard');
+                    $redirectRoute = route('dashboard');
+                    break;
 
                 case 'student':
-                    return redirect()->route('dashboard');
+                    $redirectRoute = route('dashboard');
+                    break;
+
+                case 'parent':
+                    $redirectRoute = route('dashboard');
+                    break;
 
                 default:
                     Auth::logout();
-                    return back()->withErrors(['login_id' => 'Access denied. Role not configured.']);
+                    // Return error if role is missing
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'login_id' => ['Your account has no assigned role.'],
+                    ]);
             }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Login successful! Redirecting...',
+                'redirect' => $redirectRoute
+            ]);
         }
 
-        // 5. Fail Response
-        return back()->withErrors([
-            'login_id' => 'The provided credentials do not match our records.',
-        ])->onlyInput('login_id');
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'login_id' => ['The provided credentials do not match our records.'],
+        ]);
     }
 
     public function switch(Request $request)

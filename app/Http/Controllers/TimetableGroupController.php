@@ -29,15 +29,19 @@ class TimetableGroupController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required|string|max:255']);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:morning,afternoon,evening,full_day'
+        ]);
 
         TimetableGroup::create([
-            'organization_id' => auth()->user()->organization_id, // Safely handle this
+            'organization_id' => auth()->user()->organization_id,
             'name' => $request->name,
+            'type' => $request->type,
             'status' => 1
         ]);
 
-        return response()->json(['status' => true, 'message' => 'Group created successfully']);
+        return response()->json(['status' => true, 'message' => 'Profile created successfully']);
     }
 
     /**
@@ -73,7 +77,8 @@ class TimetableGroupController extends Controller
 
         $group->update([
             'name'   => $request->name,
-            'status' => $statusValue
+            'status' => $statusValue,
+            'type' => $request->type,
         ]);
 
         return response()->json([

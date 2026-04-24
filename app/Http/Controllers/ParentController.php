@@ -108,6 +108,7 @@ class ParentController extends Controller
                 'phone'           => $request->mobile_number,
                 'password'        => Hash::make($request->password),
                 'organization_id' => $orgId,
+                'username'  =>  $request->mobile_number,
                 'user_type'       => 'parent',
             ]);
 
@@ -379,6 +380,4 @@ class ParentController extends Controller
             'data'   => $timetableData
         ]);
     }
-
-   
 }

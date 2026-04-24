@@ -110,7 +110,7 @@
                                             <td>{{ ucfirst($parent->gender) }}</td>
                                             <td>{{ $parent->mobile_number ?? 'N/A' }}</td>
                                             <td>{{ $parent->occupation ?? 'N/A' }}</td>
-                                            <td><span class="badge bg-primary-transparent">{{ $parent->relation
+                                            <td><span class="badge bg-primary">{{ $parent->relation
                                                     }}</span></td>
                                             <td>
                                                 <div class="status-cell">
@@ -159,10 +159,10 @@
                                                         </p>
                                                     </div>
 
-                                                    <button class="btn btn-sm btn-primary-light view-children"
+                                                    <button title="View Students" class="btn btn-sm btn-primary-light view-children"
                                                         data-id="{{ $parent->id }}"
                                                         data-name="{{ $parent->first_name }} {{ $parent->last_name }}">
-                                                        <i class="fe fe-users"></i> View Students
+                                                        <i class="fe fe-users"></i> 
                                                     </button>
                                                 </div>
                                             </td>

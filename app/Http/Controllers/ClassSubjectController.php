@@ -16,10 +16,14 @@ class ClassSubjectController extends Controller
      */
     public function index()
     {
-        $classes = Classes::all();
-        $subjects = Subject::all();
+        $assign_subjects = ClassSubject::with(['class', 'subject', 'creator'])
+            ->where('status', 1)
+            ->orderBy('class_id')
+            ->paginate(15);
 
-        $assign_subjects = ClassSubject::with(['class', 'subject'])->paginate(15);
+
+        $classes = Classes::orderBy('name', 'asc')->get();
+        $subjects = Subject::orderBy('name', 'asc')->get();
 
         return view('pages.assign_subjects.index', compact('classes', 'subjects', 'assign_subjects'));
     }

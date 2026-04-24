@@ -215,6 +215,7 @@
                                 <option value="">Select Type</option>
                                 <option value="practical">Practical</option>
                                 <option value="theory">Theory</option>
+                                <option value="both">Both</option>
                             </select>
                         </div>
 

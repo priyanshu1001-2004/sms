@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::create('timetable_groups', function (Blueprint $table) {
             $table->id();
             $table->foreignId('organization_id')->constrained()->onDelete('cascade');
-
-            $table->string('name'); 
+            $table->string('name');
+            $table->string('type'); 
             $table->boolean('status')->default(1);
             $table->timestamps();
             $table->softDeletes();
 
+            // Unique name within the same organization
             $table->unique(['organization_id', 'name']);
         });
     }

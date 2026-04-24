@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Classes;
 use App\Models\ClassTimetable;
 use App\Models\Teacher;
+use App\Models\TeacherSubject;
 use App\Models\TimeSlot;
 use App\Models\WeekDay;
 use Illuminate\Http\Request;
@@ -81,53 +82,67 @@ class ClassTimetableController extends Controller
             'time_slot_id' => 'required',
         ]);
 
-        // 1. Current Slot ki timings fetch karein
+        $orgId = currentOrgId();
+        $entryId = $request->entry_id;
+
         $newSlot = TimeSlot::findOrFail($request->time_slot_id);
-        $entryId = $request->entry_id; // Edit mode ke liye
+        $newStart = $newSlot->start_time;
+        $newEnd = $newSlot->end_time;
 
-        // 2. TEACHER FREE CHECK (The Main Logic)
+        // 1. Check for Conflicts (Teacher or Class already busy)
         $conflict = ClassTimetable::where('week_day_id', $request->week_day_id)
-            ->where('id', '!=', $entryId) // Edit karte waqt khud se conflict na ho
-            ->where(function ($query) use ($request, $newSlot) {
-
-                $query->where(function ($q) use ($request, $newSlot) {
+            ->where('id', '!=', $entryId)
+            ->where(function ($query) use ($request, $newStart, $newEnd) {
+                $query->where(function ($q) use ($request, $newStart, $newEnd) {
+                    // Conflict: Same Teacher at same time
                     $q->where('teacher_id', $request->teacher_id)
-                        ->whereHas('timeSlot', function ($t) use ($newSlot) {
-                            $t->where('start_time', '<', $newSlot->end_time)
-                                ->where('end_time', '>', $newSlot->start_time);
+                        ->whereHas('timeSlot', function ($t) use ($newStart, $newEnd) {
+                            $t->where('start_time', '<', $newEnd)
+                                ->where('end_time', '>', $newStart);
                         });
                 })
-                    ->orWhere(function ($q) use ($request) {
+                    ->orWhere(function ($q) use ($request, $newStart, $newEnd) {
+                        // Conflict: Same Class at same time
                         $q->where('class_id', $request->class_id)
-                            ->where('time_slot_id', $request->time_slot_id);
+                            ->whereHas('timeSlot', function ($t) use ($newStart, $newEnd) {
+                                $t->where('start_time', '<', $newEnd)
+                                    ->where('end_time', '>', $newStart);
+                            });
                     });
-            })->first();
+            })
+            ->with(['teacher', 'class', 'timeSlot'])
+            ->first();
 
+        // 2. Handle Conflict Message
         if ($conflict) {
-            $teacherName = $conflict->teacher->first_name . ' ' . $conflict->teacher->last_name;
+            $teacherName = $conflict->teacher->name; // Using 'name' instead of first/last
             $className = $conflict->class->name;
+            $slotTime = date('h:i A', strtotime($conflict->timeSlot->start_time)) . ' - ' . date('h:i A', strtotime($conflict->timeSlot->end_time));
 
-            $errorMsg = ($conflict->teacher_id == $request->teacher_id)
-                ? "Conflict: {$teacherName} is already busy in Class {$className} at this time!"
-                : "Conflict: This class slot is already occupied by another subject.";
+            if ($conflict->teacher_id == $request->teacher_id) {
+                $msg = "Conflict: {$teacherName} is already teaching Class {$className} at {$slotTime}.";
+            } else {
+                $msg = "Conflict: Class {$className} already has a subject scheduled at {$slotTime}.";
+            }
 
-            return response()->json(['status' => false, 'message' => $errorMsg], 422);
+            return response()->json(['status' => false, 'message' => $msg], 422);
         }
 
+        // 3. Save or Update
+        // Note: organization_id is handled automatically if you use the Multitenantable trait
         ClassTimetable::updateOrCreate(
             ['id' => $entryId],
             [
-                'organization_id' => currentOrgId(),
-                'class_id'       => $request->class_id,
-                'subject_id'     => $request->subject_id,
-                'teacher_id'     => $request->teacher_id,
-                'week_day_id'    => $request->week_day_id,
-                'time_slot_id'   => $request->time_slot_id,
-                'room_number'    => $request->room_number,
+                'class_id'     => $request->class_id,
+                'subject_id'    => $request->subject_id,
+                'teacher_id'    => $request->teacher_id,
+                'week_day_id'   => $request->week_day_id,
+                'time_slot_id'  => $request->time_slot_id,
+                'room_number'   => $request->room_number,
             ]
         );
 
-        return response()->json(['status' => true, 'message' => 'Assignment successful!']);
+        return response()->json(['status' => true, 'message' => 'Timetable updated successfully!']);
     }
 
     /**
@@ -199,23 +214,30 @@ class ClassTimetableController extends Controller
             ], 500);
         }
     }
-    public function getTeacherBySubject($subjectId, $classId)
+
+    public function getQualifiedTeachers(Request $request)
     {
-        $classSubject = \App\Models\ClassSubject::where('class_id', $classId)
+        $classId = $request->class_id;
+        $subjectId = $request->subject_id;
+
+        // 1. Find mappings for this Class + Subject
+        // Ensure TeacherSubject model has a 'teacher' relationship pointing to the Teacher model
+        $assignments = TeacherSubject::where('class_id', $classId)
             ->where('subject_id', $subjectId)
-            ->first();
+            ->where('status', 1)
+            ->with('teacher')
+            ->get();
 
-        if (!$classSubject) {
-            return response()->json(['data' => null, 'message' => 'Subject not linked to class']);
-        }
+        // 2. Format for Select2
+        $teachers = $assignments->map(function ($a) {
+            if ($a->teacher) {
+                return [
+                    'id'   => $a->teacher->id,
+                    'name' => $a->teacher->first_name . ' ' . $a->teacher->last_name
+                ];
+            }
+        })->filter(); // Remove nulls if any mapping has a missing teacher record
 
-        $assignment = \App\Models\SubjectTeacher::with('teacher')
-            ->where('class_subject_id', $classSubject->id)
-            ->first();
-
-        return response()->json([
-            'status' => true,
-            'data' => $assignment
-        ]);
+        return response()->json(['teachers' => $teachers]);
     }
 }

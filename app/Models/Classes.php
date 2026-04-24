@@ -54,17 +54,13 @@ class Classes extends Model
         return $this->hasMany(ClassSubject::class, 'class_id');
     }
 
-    public function board()
-    {
-        return $this->belongsTo(Board::class, 'board_id');
-    }
+   
 
-    // This is the many-to-many relationship using your custom pivot table
     public function subjects()
     {
         return $this->belongsToMany(Subject::class, 'class_subjects', 'class_id', 'subject_id')
-            ->withPivot('status', 'organization_id') // Recommended to include these
-            ->wherePivot('status', 1);
+            ->withPivot('status', 'created_by')
+            ->withTimestamps();
     }
 
     public function timetableGroup()

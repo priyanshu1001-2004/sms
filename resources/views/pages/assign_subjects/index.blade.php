@@ -22,43 +22,79 @@
 
                         <div class="card-body pt-0" id="data-table-container">
                             <div class="table-responsive">
-                                <table class="table table-bordered text-nowrap border-bottom saas-table"
-                                    id="basic-datatable">
+                                <table class="table table-bordered text-nowrap border-bottom saas-table">
                                     <thead>
-                                        <tr class="bg-primary">
-                                            <th>#</th>
-                                            <th>Class Name</th>
-                                            <th>Subject Name</th>
-                                            <th>Status</th>
-                                            <th>Created By</th>
+                                        <tr class="bg-primary text-white">
+                                            <th class="text-white" style="width: 5%">#</th>
+                                            <th class="text-white" style="width: 25%">Class Name</th>
+                                            <th class="text-white">Assigned Subjects</th>
+                                            <th class="text-white text-center" style="width: 15%">Status</th>
+                                            <th class="text-white" style="width: 15%">Created By</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($assign_subjects as $index => $assign)
+                                        {{-- Group the current page's results by Class Name --}}
+                                        @forelse($assign_subjects->groupBy('class_id') as $classId => $group)
+                                        @php
+                                        $firstEntry = $group->first();
+                                        @endphp
                                         <tr>
-                                            <td>{{ $assign_subjects->firstItem() + $index }}</td>
-                                            <td><span class="fw-bold">{{ $assign->class->name ?? 'N/A' }}</span></td>
-                                            <td>{{ $assign->subject->name ?? 'N/A' }}</td>
-                                           
+                                            {{-- 1. Row Number --}}
+                                            <td>{{ $loop->iteration }}</td>
 
-                                            <td class="status-cell">
-                                                <span class="badge bg-{{ $assign->status ? 'success' : 'danger' }}">
-                                                    {{ $assign->status ? 'Active' : 'Inactive' }}
+                                            {{-- 2. Class Name (Shows once per group) --}}
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div
+                                                        class="avatar avatar-sm bg-primary-transparent text-primary me-2">
+                                                        <i class="fe fe-layers"></i>
+                                                    </div>
+                                                    <span class="fw-bold fs-14">{{ $firstEntry->class->name ?? 'N/A'
+                                                        }}</span>
+                                                </div>
+                                            </td>
+
+                                            {{-- 3. Subjects as Badges --}}
+                                            <td>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    @foreach($group as $item)
+                                                    <span
+                                                        class="badge bg-primary-transparent text-primary border border-primary-20 px-3 py-2">
+                                                        <i class="fe fe-book-open me-1 small"></i> {{
+                                                        $item->subject->name ?? 'N/A' }}
+                                                    </span>
+                                                    @endforeach
+                                                </div>
+                                            </td>
+
+                                            {{-- 4. Status --}}
+                                            <td class="text-center">
+                                                <span
+                                                    class="badge bg-success-transparent text-success rounded-pill px-3">
+                                                    Active
                                                 </span>
                                             </td>
-                                            
-                                            <td>{{ $assign->creator->name ?? 'System' }}</td>
-                                           
+
+                                            {{-- 5. Creator --}}
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="text-muted small">{{ $firstEntry->creator->name ??
+                                                        'System' }}</span>
+                                                </div>
+                                            </td>
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="6" class="text-center">No assignments found.</td>
+                                            <td colspan="5" class="text-center py-5 text-muted">No assignments found for
+                                                the current selection.</td>
                                         </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="mt-3">
+
+                            {{-- Pagination Links --}}
+                            <div class="mt-4 d-flex justify-content-end">
                                 {{ $assign_subjects->links() }}
                             </div>
                         </div>
