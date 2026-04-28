@@ -36,32 +36,43 @@ class OrganizationController extends Controller implements HasMiddleware
 
     public function index(Request $request)
     {
-        $organizations = Organization::with('user', 'subscription')
+        $query = Organization::query();
 
-            ->when($request->name, function ($query, $name) {
-                return $query->where('name', 'like', '%' . $name . '%');
-            })
-            // Filter by Email
-            ->when($request->email, function ($query, $email) {
-                return $query->where('email', 'like', '%' . $email . '%');
-            })
-            // Filter by Phone
-            ->when($request->phone, function ($query, $phone) {
-                return $query->where('phone', 'like', '%' . $phone . '%');
-            })
-            // Filter by Status (active/inactive)
-            ->when($request->status, function ($query, $status) {
-                $val = ($status === 'active') ? 1 : 0;
-                return $query->where('status', $val);
-            })
-            ->orderBy('id', 'desc')
+        // Organization Name
+        if ($request->filled('name')) {
+            $query->where('name', 'ILIKE', '%' . trim($request->name) . '%');
+        }
+
+        // User Email
+        if ($request->filled('email')) {
+            $email = trim($request->email);
+
+            $query->whereHas('user', function ($q) use ($email) {
+                $q->where('email', 'ILIKE', "%{$email}%");
+            });
+        }
+
+        // User Phone
+        if ($request->filled('phone')) {
+            $phone = trim($request->phone);
+
+            $query->whereHas('user', function ($q) use ($phone) {
+                $q->where('phone', 'ILIKE', "%{$phone}%");
+            });
+        }
+
+        // Status
+        if ($request->status !== null && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        $organizations = $query
+            ->latest('id')
             ->paginate(10)
             ->withQueryString();
 
-
         return view('pages.organizations.index', compact('organizations'));
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -379,7 +390,7 @@ class OrganizationController extends Controller implements HasMiddleware
                     if ($request->filled('upi_id')) {
                         $pa = trim($request->upi_id);
                         $pn = rawurlencode($request->account_holder ?? $org->name);
-                        $mc = "5211"; 
+                        $mc = "5211";
                         $tn = rawurlencode("Fee Payment " . $org->name); // Transaction Note
 
                         // Final Secure UPI String

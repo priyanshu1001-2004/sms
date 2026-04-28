@@ -48,7 +48,7 @@
                                         </select>
                                     </div>
 
-                                    <div class="col-md-2">
+                                    <!-- <div class="col-md-2">
                                         <label class="form-label small fw-bold">Status</label>
                                         <select name="status" class="form-control form-select ">
                                             <option value="">All Status</option>
@@ -61,7 +61,7 @@
                                             <option value="cancelled" {{ request('status')=='cancelled' ? 'selected'
                                                 : '' }}>Cancelled</option>
                                         </select>
-                                    </div>
+                                    </div> -->
 
                                     <div class="col-md-4">
                                         <button type="submit" class="btn btn-primary shadow-sm">
@@ -89,7 +89,7 @@
                                             <th data-orderby="true">Amount</th>
                                             <th>Start Date</th>
                                             <th>End Date</th>
-                                            <th>Status</th>
+                                            <!-- <th>Status</th> -->
                                             <th data-orderby="true">Exp In</th>
                                             <th>Payment Reference</th>
                                         </tr>
@@ -103,7 +103,7 @@
                                             <td>{{ $subscription->amount }}</td>
                                             <td>{{ formatDate($subscription->start_date) }}</td>
                                             <td>{{ formatDate($subscription->end_date) }}</td>
-                                            <td>{{ $subscription->status }}</td>
+                                            <!-- <td>{{ $subscription->status }}</td> -->
                                             <td>
                                                 @if($subscription->days_remaining > 0)
                                                 <span class="badge bg-success">
@@ -180,13 +180,13 @@
                                         <label class="form-label" for="amount">Amount <span
                                                 class="text-danger">*</span></label>
                                         <div class="input-group">
-                                            <span class="input-group-text">$</span>
+                                            <span class="input-group-text">₹</span>
                                             <input type="number" name="amount" id="amount" step="0.01"
                                                 class="form-control" placeholder="0.00" data-rules="required|numeric">
                                         </div>
                                     </div>
 
-                                    <div class="col-md-6 mb-3">
+                                    <!-- <div class="col-md-6 mb-3">
                                         <label class="form-label" for="status">Status <span
                                                 class="text-danger">*</span></label>
                                         <select name="status" id="status" class="form-control" data-rules="required">
@@ -196,27 +196,32 @@
                                             <option value="expired">Expired</option>
                                             <option value="cancelled">Cancelled</option>
                                         </select>
+                                    </div> -->
+
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label" for="payment_reference">Payment Reference</label>
+                                        <input type="text" name="payment_reference" id="payment_reference"
+                                            class="form-control" placeholder="TXN ID, Receipt No, etc.">
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label" for="start_date">Start Date <span
-                                                class="text-danger">*</span></label>
+                                        <label class="form-label" for="start_date">
+                                            Start Date <span class="text-danger">*</span>
+                                        </label>
+
                                         <input type="date" name="start_date" id="start_date" class="form-control"
-                                            data-rules="required|date">
+                                            data-rules="required|date" min="{{ now()->toDateString() }}"
+                                            value="{{ old('start_date', now()->toDateString()) }}">
                                     </div>
 
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label" for="end_date">End Date <span
                                                 class="text-danger">*</span></label>
-                                        <input type="date" name="end_date" id="end_date" class="form-control"
+                                        <input type="date" name="end_date" id="end_date" class="form-control" min="{{ now()->toDateString() }}"
                                             data-rules="required|date">
                                     </div>
 
-                                    <div class="col-12 mb-3">
-                                        <label class="form-label" for="payment_reference">Payment Reference</label>
-                                        <input type="text" name="payment_reference" id="payment_reference"
-                                            class="form-control" placeholder="TXN ID, Receipt No, etc.">
-                                    </div>
+
                                 </div>
 
                                 <div class="modal-footer px-0 pb-0 pt-3 border-top">

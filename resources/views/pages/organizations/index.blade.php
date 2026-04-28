@@ -22,9 +22,13 @@
                                 <input type="text" name="name" class="form-control" placeholder="School Name"
                                     value="{{ request('name') }}">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <input type="text" name="email" class="form-control" placeholder="Admin Email"
                                     value="{{ request('email') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <input type="text" name="phone" class="form-control" placeholder="Phone"
+                                    value="{{ request('phone') }}">
                             </div>
                             <div class="col-md-2">
                                 <select name="status" class="form-control select2">
@@ -33,7 +37,7 @@
                                     <option value="0" {{ request('status')=='0' ? 'selected' : '' }}>Inactive</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <button type="submit" class="btn btn-primary px-4"><i
                                         class="fe fe-search me-1"></i>Search</button>
                                 <a href="{{ route('organizations.index') }}" class="btn btn-light px-4"><i
@@ -173,7 +177,7 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label required">Admin Phone</label>
                             <input type="text" name="admin_phone" class="form-control"
-                                data-rules="required|digits|min:10">
+                                data-rules="required|digits|min:10|max:10">
                         </div>
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Admin Email (Optional)</label>
@@ -240,7 +244,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Phone Number</label>
                             <input type="text" name="admin_phone" id="edit_admin_phone" class="form-control"
-                                data-rules="required|digits|min:10">
+                                data-rules="required|digits|min:10|max:10">
                         </div>
 
                         <div class="col-md-6">

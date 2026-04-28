@@ -48,52 +48,59 @@ class SubscriptionController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Strict Validation
+        // Validation
         $validatedData = $request->validate([
             'organization_id'   => 'required|exists:organizations,id',
             'plan_name'         => 'required|string|max:255',
             'amount'            => 'required|numeric|min:0',
             'start_date'        => 'required|date',
             'end_date'          => 'required|date|after_or_equal:start_date',
-            'status'            => 'required|string|in:active,expired,cancelled,trial',
             'payment_reference' => 'nullable|string|max:255',
         ]);
 
         DB::beginTransaction();
+
         try {
 
-            if ($validatedData['status'] === 'active') {
-                Subscription::where('organization_id', $validatedData['organization_id'])
-                    ->where('status', 'active')
-                    ->whereNull('deleted_at')
-                    ->update([
-                        'status'     => 'cancelled',
-                        'updated_at' => now()
-                    ]);
-            }
+            // Cancel previous active subscription
+            Subscription::where('organization_id', $validatedData['organization_id'])
+                ->where('status', 'active')
+                ->update([
+                    'status' => 'cancelled',
+                ]);
 
-            $subscription = Subscription::create($validatedData);
+            // Create new subscription
+            $subscription = Subscription::create([
+                ...$validatedData,
+                'status' => 'active',
+            ]);
 
-            $orgStatus = in_array($validatedData['status'], ['active', 'trial']) ? 1 : 0;
+            // Activate organization
             $organization = Organization::findOrFail($validatedData['organization_id']);
-            $organization->update(['status' => $orgStatus]);
 
+            $organization->update([
+                'status' => 1
+            ]);
+
+            // Audit Log
             auditLog(
                 module: 'Subscription',
                 action: 'Store',
                 recordId: $subscription->id,
-                new: $validatedData,
-                description: "New {$subscription->plan_name} plan activated. Previous active plans for {$organization->name} were archived."
+                new: $subscription->toArray(),
+                description: "Activated {$subscription->plan_name} subscription for {$organization->name}."
             );
 
             DB::commit();
 
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Subscription created successfully. History updated.'
+                'message' => 'Subscription created successfully.'
             ]);
         } catch (\Exception $e) {
+
             DB::rollBack();
+
             Log::error('Subscription Flow Error: ' . $e->getMessage());
 
             return response()->json([
